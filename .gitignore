@@ -1,0 +1,11 @@
+# 민감 정보 / 대용량 파일 제외
+realestate.db
+coords_cache.json
+
+# Python 스크립트 (API 키 포함)
+*.py
+__pycache__/
+
+# 로컬 전용
+*.output
+*.log

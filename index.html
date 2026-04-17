@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수도권 아파트 실질수익률 지도</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f0f2f5; color:#1a1a2e; }
+
+/* ── 헤더 ── */
+#header {
+  display:flex; align-items:center; gap:10px;
+  background:#1a1a2e; color:#fff;
+  padding:8px 16px; height:52px;
+  position:sticky; top:0; z-index:1000;
+}
+#header h1 { font-size:14px; font-weight:700; white-space:nowrap; flex-shrink:0; }
+#header h1 span { color:#f59e0b; }
+
+.search-wrap { position:relative; flex:1; min-width:0; max-width:280px; }
+.search-input {
+  width:100%; padding:7px 12px; border-radius:8px;
+  border:none; font-size:13px; background:#2e2e4e; color:#fff; outline:none;
+}
+.search-input::placeholder { color:#888; }
+#autocomplete, #area-autocomplete {
+  position:absolute; top:34px; left:0; right:0;
+  background:#fff; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.15);
+  z-index:2000; max-height:280px; overflow-y:auto; display:none;
+}
+.ac-item {
+  padding:9px 12px; cursor:pointer; font-size:13px;
+  border-bottom:1px solid #f0f0f0; color:#1a1a2e;
+}
+.ac-item:hover,.ac-item.active { background:#f5f7ff; }
+.ac-grade {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:18px; height:18px; border-radius:4px;
+  font-size:10px; font-weight:700; margin-right:6px; flex-shrink:0;
+}
+#legend {
+  display:flex; gap:8px; margin-left:auto; align-items:center; font-size:11px; flex-shrink:0;
+}
+.leg-item { display:flex; align-items:center; gap:3px; }
+.leg-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* ── 필터바 ── */
+#filter-bar {
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  background:#fff; border-bottom:1px solid #e8e8e8;
+  padding:6px 16px; min-height:44px;
+  position:sticky; top:52px; z-index:990;
+}
+.filter-group { display:flex; align-items:center; gap:3px; }
+.filter-label { font-size:11px; font-weight:700; color:#999; white-space:nowrap; margin-right:2px; }
+.fbtn {
+  min-width:26px; height:24px; border-radius:5px; border:2px solid transparent;
+  font-size:11px; font-weight:800; cursor:pointer;
+  transition:all .15s; opacity:.3; padding:0 3px;
+  background:transparent; color:#555;
+}
+.fbtn.active { opacity:1; }
+.fbtn[data-g="S"]        { border-color:#1976D2; color:#1976D2; }
+.fbtn[data-g="A"]        { border-color:#388E3C; color:#388E3C; }
+.fbtn[data-g="B"]        { border-color:#F9A825; color:#F9A825; }
+.fbtn[data-g="C"]        { border-color:#F57C00; color:#F57C00; }
+.fbtn[data-g="D"]        { border-color:#D32F2F; color:#D32F2F; }
+.fbtn[data-g="E"]        { border-color:#757575; color:#757575; }
+.fbtn.active[data-g="S"] { background:#1976D2; color:#fff; }
+.fbtn.active[data-g="A"] { background:#388E3C; color:#fff; }
+.fbtn.active[data-g="B"] { background:#F9A825; color:#333; }
+.fbtn.active[data-g="C"] { background:#F57C00; color:#fff; }
+.fbtn.active[data-g="D"] { background:#D32F2F; color:#fff; }
+.fbtn.active[data-g="E"] { background:#757575; color:#fff; }
+.filter-sep { width:1px; height:20px; background:#e0e0e0; margin:0 3px; }
+#filter-reset {
+  font-size:11px; padding:3px 9px; border-radius:5px;
+  background:#f0f0f0; border:1px solid #ddd; cursor:pointer;
+  color:#555; white-space:nowrap; font-weight:600; transition:background .15s;
+}
+#filter-reset:hover { background:#e0e0e0; }
+#filter-reset.has-filter { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
+#area-badge {
+  display:none; align-items:center; gap:4px;
+  background:#e3f2fd; border:1px solid #90caf9; border-radius:12px;
+  padding:2px 9px; font-size:12px; color:#1565c0; font-weight:600;
+}
+#area-badge .bx { cursor:pointer; margin-left:2px; font-size:13px; }
+#filter-count { font-size:11px; color:#bbb; margin-left:auto; white-space:nowrap; }
+
+/* ── 메인 레이아웃 ── */
+#main { display:flex; height:calc(100vh - 52px - 44px - 44px); }
+#map-wrap { flex:6; position:relative; }
+#map { width:100%; height:100%; }
+
+#loading {
+  position:absolute; inset:0; background:rgba(255,255,255,.88);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:500; gap:12px;
+}
+.spinner {
+  width:40px; height:40px; border:4px solid #e0e0e0; border-top-color:#f59e0b;
+  border-radius:50%; animation:spin .8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+#loading-msg { font-size:14px; color:#444; text-align:center; white-space:pre-line; max-width:360px; }
+
+/* ── 패널 ── */
+#panel {
+  flex:4; min-width:360px; max-width:520px;
+  background:#fff; overflow-y:auto;
+  box-shadow:-2px 0 12px rgba(0,0,0,.08); display:flex; flex-direction:column;
+}
+#panel-placeholder {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; height:100%; color:#bbb; gap:12px;
+}
+#panel-placeholder svg { width:64px; opacity:.3; }
+#panel-content { display:none; flex-direction:column; }
+.panel-header { padding:18px 18px 10px; border-bottom:1px solid #f0f0f0; }
+.panel-title  { font-size:18px; font-weight:700; margin-bottom:4px; }
+.panel-addr   { font-size:13px; color:#666; }
+.panel-meta   { font-size:12px; color:#999; margin-top:4px; }
+.tabs { display:flex; border-bottom:2px solid #f0f0f0; margin:0 18px; }
+.tab-btn {
+  flex:1; padding:10px 0; text-align:center; font-size:14px; font-weight:600;
+  cursor:pointer; color:#999; border:none; background:none;
+  border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .2s;
+}
+.tab-btn.active { color:#1a1a2e; border-bottom-color:#f59e0b; }
+.tab-panel { display:none; padding:16px 18px; }
+.tab-panel.active { display:block; }
+.cagr-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.cagr-card  { background:#f8f9fc; border-radius:10px; padding:12px; text-align:center; }
+.cagr-label { font-size:11px; color:#888; margin-bottom:4px; }
+.cagr-val   { font-size:20px; font-weight:700; }
+.cagr-val.positive { color:#e53e3e; }
+.cagr-val.negative { color:#3182ce; }
+.cagr-val.neutral  { color:#555; }
+.grade-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:6px;
+  font-size:14px; font-weight:800; color:#fff;
+  margin-left:8px; vertical-align:middle; flex-shrink:0;
+}
+.compare-box { background:#f8f9fc; border-radius:10px; padding:14px; margin-bottom:16px; font-size:13px; }
+.compare-row { display:flex; justify-content:space-between; padding:4px 0; }
+.compare-row.this-apt {
+  background:#fff3cd; margin:4px -14px; padding:8px 14px; border-radius:6px; font-weight:700;
+}
+.chart-wrap  { position:relative; width:100%; height:400px; margin-bottom:16px; }
+.chart-title { font-size:12px; font-weight:600; color:#555; margin-bottom:6px; }
+
+/* ── 하단 ── */
+#footer {
+  height:44px; background:#1a1a2e; color:#aaa;
+  display:flex; align-items:center; padding:0 20px; font-size:12px; gap:24px; overflow-x:auto;
+}
+#footer span { white-space:nowrap; }
+#footer .hl { color:#f59e0b; font-weight:600; }
+
+/* ── 등급 색 (새 체계: S=파랑 A=초록 B=노랑 C=주황 D=빨강 E=회색) ── */
+.grade-S { background:#1976D2 !important; color:#fff !important; }
+.grade-A { background:#388E3C !important; color:#fff !important; }
+.grade-B { background:#F9A825 !important; color:#333 !important; }
+.grade-C { background:#F57C00 !important; color:#fff !important; }
+.grade-D { background:#D32F2F !important; color:#fff !important; }
+.grade-E { background:#757575 !important; color:#fff !important; }
+.grade-N { background:#fff !important; color:#888 !important; border:1.5px solid #ddd !important; }
+
+.apt-marker { cursor:pointer; }
+.apt-marker svg { display:block; }
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div {
+  background-color:rgba(26,26,46,.85); color:#fff; font-weight:700; font-size:13px;
+}
+.marker-cluster { background-color:rgba(26,26,46,.4); }
+
+/* ── 등급범례 (우하단) ── */
+#grade-legend {
+  position:absolute; bottom:30px; right:10px; z-index:400;
+  background:#fff; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,.15);
+  font-size:12px; overflow:hidden; min-width:200px;
+}
+#grade-legend-toggle {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 12px; cursor:pointer; background:#1a1a2e; color:#fff;
+  font-weight:600; font-size:12px; user-select:none;
+}
+#grade-legend-toggle .arrow { transition:transform .2s; }
+#grade-legend-toggle.open .arrow { transform:rotate(180deg); }
+#grade-legend-body { display:none; padding:8px 0; }
+#grade-legend-body.open { display:block; }
+.gl-row  { display:flex; align-items:center; gap:8px; padding:5px 12px; }
+.gl-badge {
+  width:22px; height:22px; border-radius:5px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:12px;
+}
+.gl-desc { color:#444; line-height:1.3; }
+.gl-desc strong { color:#1a1a2e; }
+
+/* ── 모달 ── */
+#info-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.55);
+  z-index:9000; display:flex; align-items:center; justify-content:center; padding:16px;
+}
+#info-modal {
+  background:#fff; border-radius:16px; max-width:600px; width:100%;
+  max-height:90vh; overflow-y:auto; box-shadow:0 8px 40px rgba(0,0,0,.3);
+  animation:modalIn .25s ease;
+}
+@keyframes modalIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+#info-modal-header { background:#1a1a2e; color:#fff; padding:20px 24px 16px; border-radius:16px 16px 0 0; }
+#info-modal-header h2 { font-size:18px; font-weight:800; margin-bottom:4px; }
+#info-modal-header p  { font-size:13px; color:#aab; }
+#info-modal-body { padding:20px 24px; }
+.modal-section { margin-bottom:20px; }
+.modal-section h3 {
+  font-size:13px; font-weight:700; color:#1a1a2e;
+  padding:5px 10px; background:#f0f2f8; border-radius:6px;
+  margin-bottom:10px; display:flex; align-items:center; gap:6px;
+}
+.modal-grade-table { width:100%; border-collapse:collapse; font-size:13px; }
+.modal-grade-table th {
+  background:#f8f9fc; padding:6px 10px; text-align:left;
+  font-weight:600; font-size:12px; color:#555; border-bottom:1px solid #eee;
+}
+.modal-grade-table td { padding:7px 10px; border-bottom:1px solid #f5f5f5; }
+.modal-grade-table tr:last-child td { border-bottom:none; }
+.mg-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border-radius:5px; font-weight:800; font-size:12px; color:#fff;
+}
+.modal-info-list { font-size:13px; color:#444; line-height:1.8; padding-left:4px; }
+.modal-info-list li { list-style:none; padding:2px 0; }
+.modal-info-list li::before { content:'•'; margin-right:8px; color:#aaa; }
+.modal-note {
+  background:#fffbe6; border:1px solid #ffe58f; border-radius:8px;
+  padding:10px 14px; font-size:12px; color:#7a5c00; margin-top:10px; line-height:1.6;
+}
+.modal-blog-link {
+  display:flex; align-items:center; gap:10px;
+  background:#f0f9ff; border:1px solid #bae0ff; border-radius:10px;
+  padding:12px 16px; text-decoration:none; color:#0050b3; font-size:13px;
+  font-weight:600; transition:background .15s;
+}
+.modal-blog-link:hover { background:#e0f3ff; }
+#info-modal-footer {
+  padding:14px 24px; border-top:1px solid #f0f0f0;
+  display:flex; justify-content:space-between; align-items:center;
+}
+#modal-close-btn {
+  background:#1a1a2e; color:#fff; border:none; border-radius:8px;
+  padding:10px 28px; font-size:14px; font-weight:700; cursor:pointer; transition:background .15s;
+}
+#modal-close-btn:hover { background:#2e2e4e; }
+#modal-noshow-label { font-size:12px; color:#888; display:flex; align-items:center; gap:6px; cursor:pointer; }
+
+/* 5년 순위 뱃지 */
+.rank-badge {
+  background:#f0f4ff; border:1px solid #d0d9ff; border-radius:8px;
+  padding:10px 14px; margin-bottom:14px; font-size:13px; color:#1a1a2e;
+  display:flex; align-items:center; gap:10px;
+}
+.rank-badge .rank-num { font-size:22px; font-weight:800; color:#2563eb; }
+.rank-badge .rank-pct { font-size:12px; color:#888; }
+
+/* 데이터없는 단지 패널 */
+.nodata-panel { padding:20px 18px; display:flex; flex-direction:column; gap:14px; }
+.nodata-card {
+  background:#f8f9fc; border-radius:10px; padding:16px;
+  font-size:13px; color:#555; line-height:1.7; border-left:4px solid #ddd;
+}
+.nodata-card.is-new  { border-left-color:#64b5f6; }
+.nodata-card.is-none { border-left-color:#ffb74d; }
+.nodata-title { font-size:14px; font-weight:700; color:#1a1a2e; margin-bottom:6px; }
+
+@media (max-width:768px) {
+  #main { flex-direction:column; height:auto; }
+  #map-wrap { height:50vh; }
+  #panel { max-width:100%; width:100%; min-height:300px; }
+  #legend { display:none; }
+  #grade-legend { bottom:24px; right:8px; }
+  .search-wrap { max-width:150px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ 공지 팝업 ═══ -->
+<div id="info-modal-overlay">
+  <div id="info-modal">
+    <div id="info-modal-header">
+      <h2>🏙 수도권 아파트 실질수익률 지도</h2>
+      <p>인플레이션을 제거한 실질 CAGR 기준으로 수도권 아파트 단지를 평가합니다</p>
+    </div>
+    <div id="info-modal-body">
+
+      <div class="modal-section">
+        <h3>📊 10년 등급 기준 <span style="font-weight:400;color:#888">(2016.03 → 2026.03)</span></h3>
+        <p style="font-size:12px;color:#777;margin-bottom:8px">인플레이션을 제거한 실질 CAGR의 <strong>절대 성과</strong>로 평가한다</p>
+        <table class="modal-grade-table">
+          <tr><th>등급</th><th>기준</th><th>의미</th></tr>
+          <tr>
+            <td><span class="mg-badge" style="background:#1976D2">S</span></td>
+            <td>서울 평균 × 2 이상 <small style="color:#999">(≈+8.7%/년)</small></td>
+            <td>압도적 수익 — 전국 최상위 2%</td>
+          </tr>
+          <tr>
+            <td><span class="mg-badge" style="background:#388E3C">A</span></td>
+            <td>서울 평균 이상 <small style="color:#999">(≈+4.4%/년)</small></td>
+            <td>서울 평균 상회 — 투자가치 높다</td>
+          </tr>
+          <tr>
+            <td><span class="mg-badge" style="background:#F9A825;color:#333">B</span></td>
+            <td>기회비용(연4%) 이상 <small style="color:#999">(+1.7%/년)</small></td>
+            <td>4% 복리 투자 우위 — 투자가치 있다</td>
+          </tr>
+          <tr>
+            <td><span class="mg-badge" style="background:#F57C00">C</span></td>
+            <td>실질 0% 이상</td>
+            <td>인플레이션 헷지 — 실거주 마지노선</td>
+          </tr>
+          <tr>
+            <td><span class="mg-badge" style="background:#D32F2F">D</span></td>
+            <td>실질 0% 이하</td>
+            <td>실질 손실 구간</td>
+          </tr>
+          <tr>
+            <td><span class="mg-badge" style="background:#757575">E</span></td>
+            <td>실질 -2% 이하</td>
+            <td>심각한 실질 손실</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="modal-section">
+        <h3>📈 5년 등급 기준 <span style="font-weight:400;color:#888">(2021.03 → 2026.03)</span></h3>
+        <p style="font-size:12px;color:#777;margin-bottom:8px">수도권 전체 단지 중 <strong>상대 순위(퍼센타일)</strong>로 평가한다</p>
+        <table class="modal-grade-table">
+          <tr><th>등급</th><th>순위 구간</th><th>설명</th></tr>
+          <tr><td><span class="mg-badge" style="background:#1976D2">S</span></td><td>상위 5%</td><td>하락장 속 압도적 성과</td></tr>
+          <tr><td><span class="mg-badge" style="background:#388E3C">A</span></td><td>상위 5~15%</td><td>우수한 성과</td></tr>
+          <tr><td><span class="mg-badge" style="background:#F9A825;color:#333">B</span></td><td>상위 15~40%</td><td>평균 이상</td></tr>
+          <tr><td><span class="mg-badge" style="background:#F57C00">C</span></td><td>상위 40~70%</td><td>중하위권</td></tr>
+          <tr><td><span class="mg-badge" style="background:#D32F2F">D</span></td><td>상위 70~90%</td><td>하위권</td></tr>
+          <tr><td><span class="mg-badge" style="background:#757575">E</span></td><td>하위 10%</td><td>최하위 성과</td></tr>
+        </table>
+        <div class="modal-note">
+          💡 2021~2026년은 부동산 하락 이후 회복 장세다. 절대 수익보다 <strong>얼마나 잘 버텼고 먼저 회복했느냐</strong>는 상대 순위가 더 정확한 평가 기준이다.
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h3>📂 데이터 출처</h3>
+        <ul class="modal-info-list">
+          <li><strong>실거래가</strong>: 국토부 실거래가 공개시스템 (아파트 매매 실거래가 API)</li>
+          <li><strong>수집 기간</strong>: 2016년 1월 ~ 2026년 3월 / 서울 25구, 경기 31시군, 인천 8구</li>
+          <li><strong>CPI(소비자물가지수)</strong>: 통계청 — 실질 수익률 계산에 사용</li>
+          <li><strong>지도 좌표</strong>: 카카오 지도 API (지오코딩)</li>
+          <li><strong>지도 타일</strong>: OpenStreetMap</li>
+        </ul>
+      </div>
+
+      <div class="modal-section">
+        <h3>❓ 데이터가 없는 경우</h3>
+        <ul class="modal-info-list">
+          <li><strong>기간 미충족</strong>: 신축 단지로 분석 기간(10년/5년)에 데이터가 없음</li>
+          <li><strong>거래 희소</strong>: 기준 시점(2016-03, 2021-03, 2026-03) 전후 거래 없음</li>
+          <li><strong>주소 미매칭</strong>: 카카오 지오코딩 실패 (단지명 특수문자 등)</li>
+          <li>동탄(화성시) 등 일부 지역은 API 이슈로 데이터 수집 중</li>
+        </ul>
+      </div>
+
+      <div class="modal-section">
+        <h3>💬 건의사항 · 정보 요청</h3>
+        <p style="font-size:13px;color:#555;margin-bottom:10px">
+          빠진 단지, 오류 데이터, 추가 분석 요청 등 아래 블로그에 댓글로 남기면 확인하겠습니다.
+        </p>
+        <a class="modal-blog-link" href="https://blog.naver.com/hwh_gusdn524/224255476886/224255476886" target="_blank" rel="noopener">
+          <span style="font-size:20px">📝</span>
+          <div>
+            <div>blog.naver.com/hwh_gusdn524/224255476886</div>
+            <div style="font-size:11px;font-weight:400;color:#4a90d9;margin-top:2px">아무 글 댓글에 남겨주시면 확인합니다</div>
+          </div>
+          <span style="margin-left:auto;font-size:16px">→</span>
+        </a>
+      </div>
+    </div>
+    <div id="info-modal-footer">
+      <label id="modal-noshow-label">
+        <input type="checkbox" id="modal-noshow"> 오늘 하루 다시 보지 않기
+      </label>
+      <button id="modal-close-btn" onclick="closeInfoModal()">지도 보러가기 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 헤더 ═══ -->
+<div id="header">
+  <h1>수도권 아파트 <span>실질수익률</span> 지도</h1>
+  <div class="search-wrap">
+    <input id="search-input" type="text" class="search-input" placeholder="아파트명 검색..." autocomplete="off">
+    <div id="autocomplete"></div>
+  </div>
+  <div class="search-wrap">
+    <input id="area-input" type="text" class="search-input" placeholder="지역 검색 (동·구·시)" autocomplete="off">
+    <div id="area-autocomplete"></div>
+  </div>
+  <div id="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#1976D2"></div>S</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#388E3C"></div>A</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#F9A825"></div>B</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#F57C00"></div>C</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#D32F2F"></div>D</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#757575"></div>E</div>
+  </div>
+</div>
+
+<!-- ═══ 필터바 ═══ -->
+<div id="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">10년</span>
+    <button class="fbtn" data-p="10" data-g="S" onclick="toggleFilter('10','S')">S</button>
+    <button class="fbtn" data-p="10" data-g="A" onclick="toggleFilter('10','A')">A</button>
+    <button class="fbtn" data-p="10" data-g="B" onclick="toggleFilter('10','B')">B</button>
+    <button class="fbtn" data-p="10" data-g="C" onclick="toggleFilter('10','C')">C</button>
+    <button class="fbtn" data-p="10" data-g="D" onclick="toggleFilter('10','D')">D</button>
+    <button class="fbtn" data-p="10" data-g="E" onclick="toggleFilter('10','E')">E</button>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">5년</span>
+    <button class="fbtn" data-p="5" data-g="S" onclick="toggleFilter('5','S')">S</button>
+    <button class="fbtn" data-p="5" data-g="A" onclick="toggleFilter('5','A')">A</button>
+    <button class="fbtn" data-p="5" data-g="B" onclick="toggleFilter('5','B')">B</button>
+    <button class="fbtn" data-p="5" data-g="C" onclick="toggleFilter('5','C')">C</button>
+    <button class="fbtn" data-p="5" data-g="D" onclick="toggleFilter('5','D')">D</button>
+    <button class="fbtn" data-p="5" data-g="E" onclick="toggleFilter('5','E')">E</button>
+  </div>
+  <div class="filter-sep"></div>
+  <button id="filter-reset" onclick="resetFilters()">전체</button>
+  <div id="area-badge">
+    <span id="area-badge-text"></span>
+    <span class="bx" onclick="clearAreaFilter()">✕</span>
+  </div>
+  <span id="filter-count"></span>
+</div>
+
+<!-- ═══ 메인 ═══ -->
+<div id="main">
+  <div id="map-wrap">
+    <div id="map"></div>
+    <div id="loading">
+      <div class="spinner"></div>
+      <span id="loading-msg">데이터 로딩 중...</span>
+    </div>
+
+    <div id="grade-legend">
+      <div id="grade-legend-toggle" onclick="toggleGradeLegend()">
+        <span>등급 기준</span><span class="arrow">▲</span>
+      </div>
+      <div id="grade-legend-body">
+        <div style="padding:4px 12px 6px;font-size:11px;font-weight:700;color:#888">10년 (절대 기준)</div>
+        <div class="gl-row"><div class="gl-badge grade-S">S</div><div class="gl-desc"><strong>서울평균 ×2↑</strong> <span style="color:#aaa">(≈+8.7%)</span></div></div>
+        <div class="gl-row"><div class="gl-badge grade-A">A</div><div class="gl-desc"><strong>서울평균↑</strong> <span style="color:#aaa">(≈+4.4%)</span></div></div>
+        <div class="gl-row"><div class="gl-badge grade-B">B</div><div class="gl-desc"><strong>기회비용↑</strong> <span style="color:#aaa">(+1.7%)</span></div></div>
+        <div class="gl-row"><div class="gl-badge grade-C">C</div><div class="gl-desc"><strong>실질 0%↑</strong> 인플레 헷지</div></div>
+        <div class="gl-row"><div class="gl-badge grade-D">D</div><div class="gl-desc"><strong>0% 이하</strong> 손실 구간</div></div>
+        <div class="gl-row"><div class="gl-badge grade-E">E</div><div class="gl-desc"><strong>-2% 이하</strong> 심각 손실</div></div>
+        <div style="padding:4px 12px 6px;font-size:11px;font-weight:700;color:#888;border-top:1px solid #f5f5f5;margin-top:4px">5년 (상대 순위)</div>
+        <div class="gl-row"><div class="gl-badge grade-S">S</div><div class="gl-desc">상위 <strong>5%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-A">A</div><div class="gl-desc">상위 <strong>5~15%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-B">B</div><div class="gl-desc">상위 <strong>15~40%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-C">C</div><div class="gl-desc">상위 <strong>40~70%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-D">D</div><div class="gl-desc">상위 <strong>70~90%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-E">E</div><div class="gl-desc">하위 <strong>10%</strong></div></div>
+        <div style="padding:6px 12px 4px;color:#999;font-size:11px;border-top:1px solid #f0f0f0;margin-top:4px">마커: 10년 우선 → 없으면 5년</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <div id="panel-placeholder">
+      <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="24" r="12" stroke="#bbb" stroke-width="3"/><path d="M32 36 C18 36 10 46 10 52 L54 52 C54 46 46 36 32 36Z" stroke="#bbb" stroke-width="3" fill="none"/></svg>
+      <span style="font-size:14px">지도에서 아파트를 클릭하세요</span>
+    </div>
+    <div id="panel-content"></div>
+  </div>
+</div>
+
+<div id="footer"><span>로딩 중...</span></div>
+
+<script>
+// ═══ 공지 모달 ═══
+function closeInfoModal() {
+  const ov = document.getElementById('info-modal-overlay');
+  if (document.getElementById('modal-noshow').checked) {
+    const exp = new Date(); exp.setHours(23,59,59,0);
+    localStorage.setItem('apt_modal_exp', exp.getTime());
+  }
+  ov.style.transition = 'opacity .2s'; ov.style.opacity = '0';
+  setTimeout(() => ov.style.display = 'none', 200);
+}
+(function(){
+  const exp = localStorage.getItem('apt_modal_exp');
+  if (exp && Date.now() < +exp)
+    document.getElementById('info-modal-overlay').style.display = 'none';
+})();
+
+// ═══ 상수 ═══
+const GRADE_COLOR = { S:'#1976D2', A:'#388E3C', B:'#F9A825', C:'#F57C00', D:'#D32F2F', E:'#757575' };
+const GRADE_TC    = { S:'#fff',    A:'#fff',    B:'#333',    C:'#fff',    D:'#fff',    E:'#fff'    };
+
+// ═══ 전역 상태 ═══
+let aptData={}, chartData={}, cpiData={}, fxData={}, oppData={}, statsData={};
+let aptData_ = [];          // 배열 형태
+let allMarkers = [];
+let sorted5yList = [];
+let map, clusterGroup;
+let activeApt = null;
+let chartInstance = null;
+
+// 필터 상태
+let activeGr10 = new Set();
+let activeGr5  = new Set();
+let areaFilter = null;  // {type:'d'|'g'|'s', value, label}
+
+// 지역 인덱스
+let areaIndex = [];
+
+// ═══ 5년 순위 ═══
+function build5yRankList() {
+  sorted5yList = aptData_.filter(a => a.r5!=null).map(a => a.r5).sort((a,b)=>b-a);
+}
+function getRank5y(v) {
+  if (v==null||!sorted5yList.length) return null;
+  const rank = sorted5yList.filter(x=>x>v).length+1;
+  const total = sorted5yList.length;
+  return { rank, total, pct:(rank/total*100).toFixed(1) };
+}
+
+// ═══ CPI 보간 ═══
+function interpolateCPI(data) {
+  const r={...data}, all=[];
+  let [y,m]=[2015,1];
+  while(y<2027){ all.push(`${y}${String(m).padStart(2,'0')}`); m++; if(m>12){m=1;y++;} }
+  for(let i=0;i<all.length;i++){
+    if(r[all[i]]!=null) continue;
+    let pi=-1,ni=-1;
+    for(let j=i-1;j>=0;j--) if(r[all[j]]!=null){pi=j;break;}
+    for(let j=i+1;j<all.length;j++) if(r[all[j]]!=null){ni=j;break;}
+    if(pi>=0&&ni>=0){ const t=(i-pi)/(ni-pi); r[all[i]]=r[all[pi]]+t*(r[all[ni]]-r[all[pi]]); }
+    else if(pi>=0) r[all[i]]=r[all[pi]];
+    else if(ni>=0) r[all[i]]=r[all[ni]];
+  }
+  return r;
+}
+
+// ═══ 데이터 로드 ═══
+async function loadJSON(p){ const r=await fetch(p); if(!r.ok) throw new Error(p+' 없음'); return r.json(); }
+
+async function loadAll(){
+  setLoading('데이터 로딩 중...');
+  try {
+    [aptData_, chartData, cpiData, fxData, oppData] = await Promise.all([
+      loadJSON('apt_data.json'),
+      loadJSON('apt_chart.json').catch(()=>({})),
+      loadJSON('cpi_monthly.json'),
+      loadJSON('fx_monthly.json').catch(()=>({})),
+      loadJSON('opportunity_cost.json').catch(()=>({})),
+    ]);
+    statsData = await loadJSON('stats_summary.json').catch(()=>({}));
+    cpiData = interpolateCPI(cpiData);
+    build5yRankList();
+    buildAreaIndex();
+  } catch(e) {
+    setLoading('오류: '+e.message+'\n\npython 05_export.py 실행 후 다시 시도하세요');
+    return false;
+  }
+  return true;
+}
+
+// ═══ 지역 인덱스 ═══
+function buildAreaIndex(){
+  const dm={},gm={},sm={};
+  aptData_.forEach(a=>{
+    if(a.d) dm[a.d]=(dm[a.d]||0)+1;
+    if(a.g) gm[a.g]=(gm[a.g]||0)+1;
+    if(a.s) sm[a.s]=(sm[a.s]||0)+1;
+  });
+  areaIndex=[
+    ...Object.entries(sm).map(([v,c])=>({type:'s',value:v,label:v,count:c})),
+    ...Object.entries(gm).map(([v,c])=>({type:'g',value:v,label:v,count:c})),
+    ...Object.entries(dm).map(([v,c])=>({type:'d',value:v,label:v,count:c})),
+  ].sort((a,b)=>b.count-a.count);
+}
+
+// ═══ 필터 로직 ═══
+function isVisible(apt){
+  if(!apt.la||!apt.lo) return false;
+  if(areaFilter){
+    const {type,value}=areaFilter;
+    let ok=false;
+    if(type==='d') ok=apt.d===value;
+    else if(type==='g') ok=(apt.g||'').includes(value);
+    else ok=(apt.s||'').includes(value);
+    if(!ok) return false;
+  }
+  const h10=activeGr10.size>0, h5=activeGr5.size>0;
+  if(!h10&&!h5) return true;
+  if(!apt.gr10&&!apt.gr5) return false;
+  if(h10&&h5) return activeGr10.has(apt.gr10)&&activeGr5.has(apt.gr5);
+  if(h10) return activeGr10.has(apt.gr10);
+  return activeGr5.has(apt.gr5);
+}
+
+function toggleFilter(p,g){
+  const s=p==='10'?activeGr10:activeGr5;
+  s.has(g)?s.delete(g):s.add(g);
+  applyFilters();
+}
+function resetFilters(){ activeGr10.clear(); activeGr5.clear(); clearAreaFilter(); }
+function clearAreaFilter(){
+  areaFilter=null;
+  document.getElementById('area-input').value='';
+  document.getElementById('area-autocomplete').style.display='none';
+  applyFilters();
+}
+
+function applyFilters(){
+  clusterGroup.clearLayers();
+  const vis=allMarkers.filter(m=>isVisible(m.options.aptRef));
+  clusterGroup.addLayers(vis);
+  updateFilterUI();
+}
+
+function updateFilterUI(){
+  document.querySelectorAll('.fbtn').forEach(b=>{
+    const s=b.dataset.p==='10'?activeGr10:activeGr5;
+    b.classList.toggle('active',s.has(b.dataset.g));
+  });
+  const hasAny=activeGr10.size||activeGr5.size||areaFilter;
+  document.getElementById('filter-reset').classList.toggle('has-filter',!!hasAny);
+  const badge=document.getElementById('area-badge');
+  if(areaFilter){
+    document.getElementById('area-badge-text').textContent=areaFilter.label;
+    badge.style.display='flex';
+  } else badge.style.display='none';
+  const cnt=allMarkers.filter(m=>isVisible(m.options.aptRef)).length;
+  const cntEl=document.getElementById('filter-count');
+  cntEl.textContent=hasAny?`${cnt.toLocaleString()}개 / 전체 ${allMarkers.length.toLocaleString()}개`:'';
+}
+
+// ═══ 지역 검색 ═══
+const areaInput=document.getElementById('area-input');
+const areaAc=document.getElementById('area-autocomplete');
+let areaTimer;
+
+areaInput.addEventListener('input',function(){
+  clearTimeout(areaTimer);
+  areaTimer=setTimeout(()=>searchArea(this.value.trim()),150);
+});
+areaInput.addEventListener('blur',()=>setTimeout(()=>areaAc.style.display='none',200));
+
+function searchArea(q){
+  if(!q||!areaIndex.length){areaAc.style.display='none';return;}
+  const res=areaIndex.filter(a=>a.value.includes(q)).slice(0,10);
+  if(!res.length){areaAc.style.display='none';return;}
+  const tl={s:'시/도',g:'구/군',d:'동/읍/면'};
+  areaAc.innerHTML=res.map(r=>`<div class="ac-item" onmousedown="selectArea(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+    <span style="font-size:10px;color:#aaa;margin-right:5px">${tl[r.type]||''}</span>
+    <strong>${esc(r.value)}</strong>
+    <span style="color:#bbb;font-size:11px;margin-left:6px">${r.count}개</span>
+  </div>`).join('');
+  areaAc.style.display='block';
+}
+
+function selectArea(r){
+  areaFilter=r;
+  areaInput.value=r.label;
+  areaAc.style.display='none';
+  const pts=aptData_.filter(a=>{
+    if(!a.la) return false;
+    if(r.type==='d') return a.d===r.value;
+    if(r.type==='g') return (a.g||'').includes(r.value);
+    return (a.s||'').includes(r.value);
+  });
+  if(pts.length){
+    const lats=pts.map(a=>a.la),lons=pts.map(a=>a.lo);
+    map.fitBounds([[Math.min(...lats)-.01,Math.min(...lons)-.01],[Math.max(...lats)+.01,Math.max(...lons)+.01]],{maxZoom:15,padding:[20,20]});
+  }
+  applyFilters();
+}
+
+// ═══ 지도 초기화 ═══
+function initMap(){
+  map=L.map('map',{center:[37.5665,126.9780],zoom:11});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19,
+  }).addTo(map);
+
+  clusterGroup=L.markerClusterGroup({
+    maxClusterRadius:50, spiderfyOnMaxZoom:true, showCoverageOnHover:false, zoomToBoundsOnClick:true,
+    iconCreateFunction(cluster){
+      const count=cluster.getChildCount();
+      const markers=cluster.getAllChildMarkers();
+      const gc={};
+      markers.forEach(m=>{ const g=m.options.aptRef?.gr10||m.options.aptRef?.gr5; if(g) gc[g]=(gc[g]||0)+1; });
+      const dom=Object.entries(gc).sort((a,b)=>b[1]-a[1])[0]?.[0]||null;
+      const bg=dom?GRADE_COLOR[dom]:'#6e6e8a';
+      const tc=dom?(GRADE_TC[dom]||'#fff'):'#fff';
+      const sz=count>200?52:count>50?46:40;
+      const fs=count>999?10:count>99?12:13;
+      return L.divIcon({
+        html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:700;border:2.5px solid rgba(255,255,255,.6);box-shadow:0 2px 8px rgba(0,0,0,.3)">${count}</div>`,
+        className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+      });
+    },
+  });
+  map.addLayer(clusterGroup);
+}
+
+// ═══ 마커 아이콘 ═══
+function makeIcon(grade, period, noData){
+  if(noData){
+    const isN=noData==='N';
+    const sz=22,bd=isN?'#90CAF9':'#BDBDBD',tc=isN?'#1565C0':'#888';
+    const da=isN?' stroke-dasharray="3,2"':'';
+    return L.divIcon({
+      html:`<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${sz/2-1.5}" fill="#fff" stroke="${bd}" stroke-width="1.8"${da}/><text x="${sz/2}" y="${sz/2}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="9" font-weight="800" font-family="sans-serif">${noData}</text></svg>`,
+      className:'apt-marker',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2],
+    });
+  }
+  const color=GRADE_COLOR[grade]||'#ccc';
+  const tc=GRADE_TC[grade]||'#fff';
+  const text=grade||'?';
+  const isS=grade==='S';
+  const w=isS?32:28, h=isS?42:36;
+  const pl=period||'';
+  return L.divIcon({
+    html:`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="M${w/2} 1 C${w*.25} 1 1 ${h*.19} 1 ${h*.38} C1 ${h*.625} ${w/2} ${h-1} ${w/2} ${h-1} S${w-1} ${h*.625} ${w-1} ${h*.38} C${w-1} ${h*.19} ${w*.75} 1 ${w/2} 1Z" fill="${color}" stroke="white" stroke-width="${isS?2:1.5}"/><text x="${w/2}" y="${h*.26}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="${isS?7:6}" font-weight="700" font-family="sans-serif" opacity=".85">${pl}</text><text x="${w/2}" y="${h*.56}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="${isS?13:11}" font-weight="800" font-family="sans-serif">${text}</text></svg>`,
+    className:'apt-marker',iconSize:[w,h],iconAnchor:[w/2,h],popupAnchor:[0,-h],
+  });
+}
+
+// ═══ 마커 렌더링 ═══
+function renderMarkers(){
+  setLoading('마커 생성 중...');
+  clusterGroup.clearLayers(); allMarkers=[];
+  const all=aptData_.filter(a=>a.la&&a.lo);
+  const CHUNK=500; let idx=0;
+
+  function nextChunk(){
+    all.slice(idx,idx+CHUNK).forEach(apt=>{
+      const hasGrade=apt.gr10||apt.gr5;
+      let icon;
+      if(hasGrade){
+        icon=makeIcon(apt.gr10||apt.gr5, apt.gr10?'10Y':'5Y');
+      } else {
+        const isNew=apt.fy&&apt.fy>='202101';
+        icon=makeIcon(null,null,isNew?'N':'-');
+      }
+      const m=L.marker([apt.la,apt.lo],{icon,title:apt.n,aptRef:apt});
+      m.on('click',()=>{activeApt=apt;showPanel(apt);});
+      allMarkers.push(m);
+    });
+    idx+=CHUNK;
+    if(idx<all.length){
+      setLoading(`마커 생성 중... ${idx}/${all.length}`);
+      setTimeout(nextChunk,0);
+    } else {
+      clusterGroup.addLayers(allMarkers);
+      hideLoading(); updateFooter(); updateFilterUI();
+    }
+  }
+  setTimeout(nextChunk,0);
+}
+
+// ═══ 상세 패널 ═══
+function showPanel(apt){
+  document.getElementById('panel-placeholder').style.display='none';
+  const pc=document.getElementById('panel-content');
+  pc.style.display='flex';
+  const g10=apt.gr10, g5=apt.gr5, hasAny=g10||g5;
+  const isNew=!hasAny&&apt.fy&&apt.fy>='202101';
+
+  const mkBadge=(g,lbl)=>g
+    ?`<span class="grade-badge grade-${g}" style="flex-direction:column;gap:0;width:36px;height:36px;font-size:14px"><span style="font-size:8px;font-weight:600;opacity:.85;line-height:1">${lbl}</span><span style="font-size:14px;font-weight:800;line-height:1">${g}</span></span>`
+    :`<span class="grade-badge grade-N" style="flex-direction:column;gap:0;width:36px;height:36px;font-size:11px"><span style="font-size:8px;opacity:.7;line-height:1">${lbl}</span><span style="line-height:1">—</span></span>`;
+
+  const header=`<div class="panel-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div class="panel-title" style="flex:1;margin-bottom:0">${esc(apt.n)}</div>
+      <div style="display:flex;gap:6px;flex-shrink:0">${mkBadge(g10,'10Y')}${mkBadge(g5,'5Y')}</div>
+    </div>
+    <div class="panel-addr" style="margin-top:6px">${esc(apt.s)} ${esc(apt.g)} ${esc(apt.d)}</div>
+    <div class="panel-meta">거래 ${apt.tc||0}건 · ${apt.fy?apt.fy.slice(0,4):'-'}~${apt.ly?apt.ly.slice(0,4):'-'}</div>
+  </div>`;
+
+  if(!hasAny){
+    pc.innerHTML=header+`<div class="nodata-panel">
+      <div class="nodata-card ${isNew?'is-new':'is-none'}">
+        <div class="nodata-title">${isNew?'🏗 신축 단지 (수익률 계산 불가)':'⚠ 수익률 계산 불가'}</div>
+        ${isNew
+          ?`<div>첫 거래 확인: <strong>${apt.fy?apt.fy.slice(0,4)+'년 '+apt.fy.slice(4,6)+'월':'미확인'}</strong></div>
+            <div style="margin-top:6px;color:#888;font-size:12px">분석 기준 시점(2021년 3월) 이전 거래 데이터가 없어<br>수익률 계산이 불가합니다.</div>`
+          :`<div>거래 ${apt.tc||0}건 확인</div>
+            <div style="margin-top:6px;color:#888;font-size:12px">기준 시점(2016-03 또는 2021-03) 전후로<br>거래 데이터가 없어 CAGR 계산이 불가합니다.</div>`
+        }
+      </div>
+      <div style="font-size:13px;color:#555">단지 정보 오류나 데이터 제보는 아래 블로그로 남겨주세요.</div>
+      <a class="modal-blog-link" href="https://blog.naver.com/hwh_gusdn524/224255476886/224255476886" target="_blank" rel="noopener">
+        <span style="font-size:18px">📝</span>
+        <div><div>제보하기</div><div style="font-size:11px;font-weight:400;color:#4a90d9">blog.naver.com/hwh_gusdn524/224255476886</div></div>
+        <span style="margin-left:auto">→</span>
+      </a>
+    </div>`;
+    return;
+  }
+
+  const initTab=g10?'10y':'5y';
+  pc.innerHTML=header+`
+    <div class="tabs">
+      <button class="tab-btn ${g10?'active':''}" onclick="switchTab('10y')">10년 분석</button>
+      <button class="tab-btn ${!g10&&g5?'active':''}" onclick="switchTab('5y')">5년 분석</button>
+    </div>
+    <div id="tab-10y" class="tab-panel ${g10?'active':''}">${renderTabContent(apt,'10y')}</div>
+    <div id="tab-5y"  class="tab-panel ${!g10&&g5?'active':''}">${renderTabContent(apt,'5y')}</div>`;
+  setTimeout(()=>drawChart(apt,initTab),50);
+}
+
+function renderTabContent(apt,period){
+  const t10=period==='10y';
+  const cagr=t10?apt.c10:apt.c5, real=t10?apt.r10:apt.r5, grade=t10?apt.gr10:apt.gr5;
+  if(!grade) return `<div style="padding:24px;text-align:center;color:#aaa;font-size:14px">데이터 부족<br><small>거래량이 적어 계산 불가</small></div>`;
+  const seoulAvg=statsData?.seoul?.avg_r10??statsData?.sido_avg?.['서울']?.r10??null;
+  const gyAvg=statsData?.sido_avg?.['경기']?.[t10?'r10':'r5']??null;
+  const cs=v=>v!=null?(v>=0?`+${v.toFixed(1)}`:v.toFixed(1)):'-';
+  const cls=v=>v>=0?'positive':'negative';
+  const rank5Html=(!t10&&real!=null)?((ri=getRank5y(real))=>!ri?'':
+    `<div class="rank-badge">
+      <div><div class="rank-num">${ri.rank.toLocaleString()}등</div><div class="rank-pct">상위 ${ri.pct}%</div></div>
+      <div style="font-size:13px;color:#444;line-height:1.6">전체 <strong>${ri.total.toLocaleString()}개</strong> 단지 중<br>
+      <span style="color:#2563eb;font-weight:700">${ri.rank.toLocaleString()}위</span> · 상위 <span style="color:#2563eb;font-weight:700">${ri.pct}%</span></div>
+    </div>`)():'';
+  return `${rank5Html}
+    <div class="cagr-cards">
+      <div class="cagr-card"><div class="cagr-label">실질 CAGR/년</div><div class="cagr-val ${cls(real)}">${cs(real)}%</div></div>
+      <div class="cagr-card"><div class="cagr-label">명목 CAGR/년</div><div class="cagr-val ${cls(cagr)}">${cs(cagr)}%</div></div>
+    </div>
+    <div class="cagr-cards">
+      <div class="cagr-card"><div class="cagr-label">분석 기간</div><div class="cagr-val neutral" style="font-size:16px">${t10?'2016':'2021'}~2026</div></div>
+      <div class="cagr-card"><div class="cagr-label">등급</div><div class="cagr-val neutral"><span class="grade-badge grade-${grade}" style="width:32px;height:32px;font-size:16px">${grade}</span></div></div>
+    </div>
+    <div class="compare-box">
+      <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px">실질 CAGR 비교</div>
+      ${seoulAvg!=null?`<div class="compare-row"><span>서울 평균</span><span>${cs(seoulAvg)}%/년</span></div>`:''}
+      ${gyAvg!=null?`<div class="compare-row"><span>경기 평균</span><span>${cs(gyAvg)}%/년</span></div>`:''}
+      <div class="compare-row"><span>기회비용 (연 4%)</span><span>+4.0%/년</span></div>
+      <div class="compare-row this-apt"><span>이 아파트</span><span>${cs(real)}%/년</span></div>
+    </div>
+    <div class="chart-title">실거래가 추이 (${t10?'2016':'2021'}-03=100 기준)</div>
+    <div class="chart-wrap"><canvas id="chart-${period}"></canvas></div>`;
+}
+
+function switchTab(period){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0)===(period==='10y')));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+period).classList.add('active');
+  if(activeApt) drawChart(activeApt,period);
+}
+
+// ═══ 차트 ═══
+function drawChart(apt,period){
+  const canvas=document.getElementById('chart-'+period);
+  if(!canvas) return;
+  const t10=period==='10y', startYm=t10?'201603':'202103', endYm='202603';
+  const months=[], prices=chartData[apt.k]||{};
+  let [y,m]=[+startYm.slice(0,4),+startYm.slice(4,6)];
+  const [ey,em]=[+endYm.slice(0,4),+endYm.slice(4,6)];
+  while(y<ey||(y===ey&&m<=em)){ months.push(`${y}${String(m).padStart(2,'0')}`); m++; if(m>12){m=1;y++;} }
+  const labels=months.map(ym=>`${ym.slice(0,4)}.${ym.slice(4,6)}`);
+
+  let priceBase=null,priceBaseYm=null;
+  for(let d=0;d<=6;d++){
+    for(const sg of[0,1,-1]){
+      if(sg===0&&d!==0) continue;
+      const dd=sg>=0?d:-d;
+      let [by,bm]=[+startYm.slice(0,4),+startYm.slice(4,6)+dd];
+      while(bm>12){bm-=12;by++;} while(bm<1){bm+=12;by--;}
+      const c=`${String(by).padStart(4,'0')}${String(bm).padStart(2,'0')}`;
+      if(prices[c]){priceBase=prices[c];priceBaseYm=c;break;}
+    }
+    if(priceBase) break;
+  }
+  // ±6개월 내 거래 없으면 → 기간 내 첫 거래를 베이스로 (상대 변동만 표시)
+  const usedFallback = !priceBase;
+  if(!priceBase){
+    for(const ym of months){ if(prices[ym]){ priceBase=prices[ym]; priceBaseYm=ym; break; } }
+  }
+  const cpiBaseAct=(priceBaseYm&&cpiData[priceBaseYm])?cpiData[priceBaseYm]:(cpiData[startYm]||100);
+  const pCnt=Object.keys(prices).filter(ym=>ym>=startYm&&ym<=endYm).length;
+  const sparse=pCnt<20;
+
+  function RA(arr,w=3){ return arr.map((v,i)=>{ const s=arr.slice(Math.max(0,i-w+1),i+1).filter(x=>x!=null); return s.length?Math.round(s.reduce((a,b)=>a+b,0)/s.length):null; }); }
+
+  const nomRaw=months.map(ym=>(prices[ym]&&priceBase)?prices[ym]/priceBase*100:null);
+  const realRaw=months.map(ym=>{
+    if(!prices[ym]||!priceBase||!cpiData[ym]) return null;
+    return (prices[ym]/priceBase)/(cpiData[ym]/cpiBaseAct)*100;
+  });
+  const nomLine=sparse?nomRaw:RA(nomRaw);
+  const realLine=sparse?realRaw:RA(realRaw);
+  const oppBase=oppData[startYm]||100;
+  const oppLine=months.map(ym=>{
+    if(!oppData[ym]||!cpiData[ym]) return null;
+    return Math.round(oppData[ym]/oppBase/(cpiData[ym]/cpiBaseAct)*100);
+  });
+  const fxBase2=fxData[priceBaseYm||startYm];
+  const dbBase=(priceBase&&fxBase2)?priceBase/fxBase2:null;
+  const fxLine=dbBase?months.map(ym=>(!prices[ym]||!fxData[ym])?null:Math.round((prices[ym]/fxData[ym])/dbBase*100)):null;
+
+  if(chartInstance){chartInstance.destroy();chartInstance=null;}
+  const ptR=sparse?5:0, ptH=sparse?7:0;
+  const ds=[
+    {label:'명목가격',data:nomLine,borderColor:'#e53e3e',backgroundColor:'rgba(229,62,62,.06)',borderWidth:2.5,pointRadius:ptR,pointHoverRadius:ptH,tension:sparse?0:.3,spanGaps:true},
+    {label:'실질가격 (인플레 제거)',data:realLine,borderColor:'#111',borderWidth:2,pointRadius:ptR,pointHoverRadius:ptH,tension:sparse?0:.3,spanGaps:true},
+    {label:'기회비용 (연4%)',data:oppLine,borderColor:'#38a169',borderWidth:1.5,pointRadius:0,tension:.1,spanGaps:true},
+  ];
+  if(fxLine) ds.push({label:'달러 기준',data:fxLine,borderColor:'#3182ce',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:.2,spanGaps:true,hidden:true});
+  const sAvgC=t10?(statsData?.sido_avg?.['서울']?.r10??null):(statsData?.sido_avg?.['서울']?.r5??null);
+  if(sAvgC!=null) ds.push({label:`서울평균 (${sAvgC>0?'+':''}${sAvgC.toFixed(1)}%/yr 실질)`,data:months.map((_,i)=>Math.round(100*Math.pow(1+sAvgC/100,i/12))),borderColor:'#f59e0b',borderWidth:1.5,borderDash:[6,3],pointRadius:0,tension:0,spanGaps:true});
+  const gAvgC=t10?(statsData?.sido_avg?.['경기']?.r10??null):(statsData?.sido_avg?.['경기']?.r5??null);
+  if(gAvgC!=null) ds.push({label:`경기평균 (${gAvgC>0?'+':''}${gAvgC.toFixed(1)}%/yr 실질)`,data:months.map((_,i)=>Math.round(100*Math.pow(1+gAvgC/100,i/12))),borderColor:'#0bc5ea',borderWidth:1.5,borderDash:[6,3],pointRadius:0,tension:0,spanGaps:true});
+
+  chartInstance=new Chart(canvas,{type:'line',data:{labels,datasets:ds},options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:20,padding:8}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y??'-'}`}}},
+    scales:{x:{ticks:{font:{size:10},maxTicksLimit:8,maxRotation:0},grid:{color:'#f0f0f0'}},y:{ticks:{font:{size:10}},grid:{color:'#f0f0f0'}}},
+  }});
+  const wrap=canvas.parentElement;
+  // 기존 안내 제거 후 재생성 (탭 전환 시 중복 방지)
+  wrap.querySelectorAll('.chart-note').forEach(el=>el.remove());
+  const notes=[];
+  if(sparse) notes.push(`거래 데이터 적음(${pCnt}건) — 각 점이 실제 거래를 나타냄`);
+  if(usedFallback && priceBaseYm) notes.push(`기준 시점 거래 없음 — ${priceBaseYm.slice(0,4)}.${priceBaseYm.slice(4,6)} 첫 거래 기준으로 표시`);
+  if(notes.length){
+    const n=document.createElement('div');
+    n.className='chart-note';
+    n.style.cssText='font-size:11px;color:#aaa;text-align:center;margin-top:4px;line-height:1.6';
+    n.innerHTML=notes.map(t=>`※ ${t}`).join('<br>');
+    wrap.appendChild(n);
+  }
+}
+
+// ═══ 검색 (아파트명) ═══
+let sTimer,acRes=[],acIdx=-1;
+const sInput=document.getElementById('search-input'), acBox=document.getElementById('autocomplete');
+sInput.addEventListener('input',function(){ acIdx=-1; clearTimeout(sTimer); sTimer=setTimeout(()=>doSearch(this.value.trim()),150); });
+sInput.addEventListener('keydown',function(e){
+  const items=acBox.querySelectorAll('.ac-item');
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){e.preventDefault();acIdx=Math.min(acIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();acIdx=Math.max(acIdx-1,0);}
+  else if(e.key==='Enter'){e.preventDefault();if(acIdx>=0&&acRes[acIdx])selectApt(acRes[acIdx].k);}
+  else if(e.key==='Escape'){acBox.style.display='none';}
+  items.forEach((el,i)=>el.classList.toggle('active',i===acIdx));
+  if(acIdx>=0) items[acIdx].scrollIntoView({block:'nearest'});
+});
+sInput.addEventListener('blur',()=>setTimeout(()=>{acBox.style.display='none';acIdx=-1;},200));
+
+function doSearch(q){
+  if(!q){acBox.style.display='none';return;}
+  acRes=aptData_.filter(a=>a.n.includes(q)||(a.d||'').includes(q)||(a.g||'').includes(q)).slice(0,10);
+  if(!acRes.length){acBox.style.display='none';return;}
+  acBox.innerHTML=acRes.map((apt,i)=>{
+    const g=apt.gr10||apt.gr5;
+    const bg=g?GRADE_COLOR[g]:'#ccc', tc=g?(GRADE_TC[g]||'#fff'):'#555';
+    return `<div class="ac-item" data-idx="${i}" onmousedown="selectApt('${esc(apt.k)}')">
+      <span class="ac-grade" style="background:${bg};color:${tc}">${g||'-'}</span>
+      <strong>${esc(apt.n)}</strong>
+      <span style="color:#999;font-size:11px;margin-left:6px">${esc(apt.s)} ${esc(apt.g)} ${esc(apt.d)}</span>
+    </div>`;
+  }).join('');
+  acBox.style.display='block';
+}
+
+function selectApt(k){
+  const apt=aptData_.find(a=>a.k===k);
+  if(!apt||!apt.la||!apt.lo) return;
+  acBox.style.display='none'; acIdx=-1; sInput.value=apt.n;
+  map.setView([apt.la,apt.lo],16); activeApt=apt; showPanel(apt);
+}
+
+// ═══ 등급 범례 토글 ═══
+function toggleGradeLegend(){
+  const t=document.getElementById('grade-legend-toggle'),b=document.getElementById('grade-legend-body');
+  const o=b.classList.contains('open');
+  t.classList.toggle('open',!o); b.classList.toggle('open',!o);
+}
+
+// ═══ 하단 통계 ═══
+function updateFooter(){
+  const total=aptData_.filter(a=>a.gr5).length;
+  const sAvg=statsData?.seoul?.avg_r10;
+  const cA=aptData_.filter(a=>a.gr10==='A').length;
+  const cE=aptData_.filter(a=>a.gr10==='E').length;
+  document.getElementById('footer').innerHTML=`
+    <span>총 <span class="hl">${aptData_.length.toLocaleString()}</span>개 단지</span>
+    <span>CAGR 완료 <span class="hl">${total.toLocaleString()}</span>개</span>
+    ${sAvg!=null?`<span>서울 평균 실질(10년) <span class="hl">${sAvg>=0?'+':''}${sAvg}%/년</span></span>`:''}
+    <span>A등급 <span class="hl">${cA.toLocaleString()}</span>개</span>
+    <span>E등급 <span class="hl">${cE.toLocaleString()}</span>개</span>
+    <span style="margin-left:auto;color:#666">기준: 2016-03~2026-03 / 인플레 제거 / OSM</span>`;
+}
+
+// ═══ 유틸 ═══
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function setLoading(m){ document.getElementById('loading').style.display='flex'; document.getElementById('loading-msg').textContent=m; }
+function hideLoading(){ document.getElementById('loading').style.display='none'; }
+
+// ═══ 부트스트랩 ═══
+window.addEventListener('load',async()=>{
+  initMap();
+  const ok=await loadAll();
+  if(!ok) return;
+  setLoading(`마커 ${aptData_.length.toLocaleString()}개 렌더링 중...`);
+  setTimeout(renderMarkers,50);
+});
+</script>
+</body>
+</html>
