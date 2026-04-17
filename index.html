@@ -539,6 +539,8 @@ const GRADE_TC    = { S:'#fff',    A:'#fff',    B:'#333',    C:'#fff',    D:'#ff
 let aptData={}, chartData={}, cpiData={}, fxData={}, oppData={}, statsData={};
 let aptData_ = [];          // 배열 형태
 let allMarkers = [];
+let subwayData = [];        // 지하철역
+let schoolData = [];        // 학교
 let sorted5yList = [];
 let map, clusterGroup;
 let activeApt = null;
@@ -594,6 +596,10 @@ async function loadAll(){
       loadJSON('opportunity_cost.json').catch(()=>({})),
     ]);
     statsData = await loadJSON('stats_summary.json').catch(()=>({}));
+    [subwayData, schoolData] = await Promise.all([
+      loadJSON('subway_stations.json').catch(()=>[]),
+      loadJSON('schools.json').catch(()=>[]),
+    ]);
     cpiData = interpolateCPI(cpiData);
     build5yRankList();
     buildAreaIndex();
@@ -847,9 +853,11 @@ function showPanel(apt){
     <div class="tabs">
       <button class="tab-btn ${g10?'active':''}" onclick="switchTab('10y')">10년 분석</button>
       <button class="tab-btn ${!g10&&g5?'active':''}" onclick="switchTab('5y')">5년 분석</button>
+      <button class="tab-btn" onclick="switchTab('loc')">📍 입지</button>
     </div>
     <div id="tab-10y" class="tab-panel ${g10?'active':''}">${renderTabContent(apt,'10y')}</div>
-    <div id="tab-5y"  class="tab-panel ${!g10&&g5?'active':''}">${renderTabContent(apt,'5y')}</div>`;
+    <div id="tab-5y"  class="tab-panel ${!g10&&g5?'active':''}">${renderTabContent(apt,'5y')}</div>
+    <div id="tab-loc" class="tab-panel"></div>`;
   setTimeout(()=>drawChart(apt,initTab),50);
 }
 
@@ -888,10 +896,159 @@ function renderTabContent(apt,period){
 }
 
 function switchTab(period){
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0)===(period==='10y')));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const btns=document.querySelectorAll('.tab-btn');
+  if(period==='10y') btns[0].classList.add('active');
+  else if(period==='5y') btns[1].classList.add('active');
+  else if(period==='loc') btns[2].classList.add('active');
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+period).classList.add('active');
-  if(activeApt) drawChart(activeApt,period);
+  if(period==='loc'){ if(activeApt) renderLocationTab(activeApt); }
+  else if(activeApt) drawChart(activeApt,period);
+}
+
+// ═══ 입지분석 ═══
+function haversine(lat1,lng1,lat2,lng2){
+  const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function renderLocationTab(apt){
+  const el=document.getElementById('tab-loc');
+  if(!el) return;
+  const lat=apt.la, lng=apt.lo;
+  if(!lat||!lng){ el.innerHTML='<div style="padding:24px;color:#aaa;text-align:center">좌표 정보 없음</div>'; return; }
+
+  // ── 지하철 점수 (max 10) ──────────────────
+  const nearSubway=[];
+  for(const s of subwayData){
+    const d=Math.round(haversine(lat,lng,s.lat,s.lng));
+    if(d<=1000) nearSubway.push({...s,dist:d});
+  }
+  nearSubway.sort((a,b)=>a.dist-b.dist);
+
+  let subScore=0;
+  const subDetail=[];
+  for(const s of nearSubway){
+    let base=0;
+    if(s.dist<=400) base=3;
+    else if(s.dist<=600) base=2;
+    else if(s.dist<=800) base=1;
+    if(base===0) continue;
+    const transfer=s.lines.length>1?(s.lines.length-1):0;
+    const pts=base+transfer;
+    subScore+=pts;
+    subDetail.push({name:s.name,lines:s.lines,dist:s.dist,base,transfer,pts});
+  }
+  subScore=Math.min(subScore,10);
+
+  // ── 학교 점수 (max 5) ──────────────────
+  const nearSchool=[];
+  for(const s of schoolData){
+    const d=Math.round(haversine(lat,lng,s.lat,s.lng));
+    if(d<=700) nearSchool.push({...s,dist:d});
+  }
+  nearSchool.sort((a,b)=>a.dist-b.dist);
+
+  let schScore=0;
+  const schDetail=[];
+  for(const s of nearSchool){
+    let pts=0;
+    if(s.dist<=400) pts=2;
+    else if(s.dist<=600) pts=1;
+    if(pts===0) continue;
+    schScore+=pts;
+    schDetail.push({name:s.name,kind:s.kind,dist:s.dist,pts});
+  }
+  schScore=Math.min(schScore,5);
+
+  const totalScore=subScore+schScore;
+  const maxScore=15;
+
+  // ── 점수 바 렌더 ──────────────────
+  function scorebar(score,max,color){
+    const pct=Math.round(score/max*100);
+    return `<div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
+      <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width .4s"></div>
+    </div>`;
+  }
+
+  // 노선 뱃지
+  function lineBadge(line){
+    const colors={'1호선':'#0052A4','2호선':'#009246','3호선':'#EF7C1C','4호선':'#00A5DE',
+      '5호선':'#996CAC','6호선':'#CD7C2F','7호선':'#747F00','8호선':'#E6186C','9호선':'#BDB092',
+      '신분당선':'#D4003B','수인·분당선':'#F5A200','경의·중앙선':'#77C4A3','경춘선':'#179CDE',
+      '공항철도':'#0090D2','서해선':'#8FC31F','경강선':'#003DA5','GTX-A':'#9C27B0',
+      '우이신설경전철':'#B0C739','인천 1호선':'#759CCE','인천 2호선':'#F5A200',
+      '의정부경전철':'#FDA600','용인에버라인':'#53A820','김포골드라인':'#9A6B1A',
+      '신림선':'#6789CA'};
+    const c=colors[line]||'#888';
+    return `<span style="background:${c};color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap">${line}</span>`;
+  }
+
+  const kindIcon={'초등학교':'🏫','중학교':'📚','고등학교':'🎓'};
+
+  el.innerHTML=`
+  <div style="padding:16px">
+    <!-- 총점 -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#2d2d5e);border-radius:12px;padding:16px;color:#fff;margin-bottom:16px">
+      <div style="font-size:12px;opacity:.7;margin-bottom:4px">입지 종합 점수</div>
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span style="font-size:36px;font-weight:900">${totalScore}</span>
+        <span style="font-size:16px;opacity:.6">/ ${maxScore}</span>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        ${scorebar(totalScore,maxScore,'#60a5fa')}
+        <span style="font-size:11px;opacity:.7;white-space:nowrap">${Math.round(totalScore/maxScore*100)}%</span>
+      </div>
+    </div>
+
+    <!-- 지하철 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🚇 지하철</span>
+        <span style="font-size:13px;font-weight:800;color:#2563eb">${subScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 10</span></span>
+      </div>
+      ${scorebar(subScore,10,'#3b82f6')}
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        ${subDetail.length===0
+          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 800m 내 역 없음</div>'
+          :subDetail.map(s=>`
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="color:#555;width:50px;flex-shrink:0">${s.dist}m</span>
+            <span style="font-weight:600;flex-shrink:0">${s.name}</span>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;flex:1">${s.lines.map(lineBadge).join('')}</div>
+            <span style="color:#2563eb;font-weight:700;flex-shrink:0">+${s.pts}점</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- 학교 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🏫 학교</span>
+        <span style="font-size:13px;font-weight:800;color:#16a34a">${schScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 5</span></span>
+      </div>
+      ${scorebar(schScore,5,'#22c55e')}
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        ${schDetail.length===0
+          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 600m 내 학교 없음</div>'
+          :schDetail.slice(0,8).map(s=>`
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
+            <span style="color:#555;width:50px;flex-shrink:0">${s.dist}m</span>
+            <span style="font-size:14px">${kindIcon[s.kind]||'🏫'}</span>
+            <span style="flex:1">${s.name} <span style="color:#888;font-size:11px">${s.kind}</span></span>
+            <span style="color:#16a34a;font-weight:700;flex-shrink:0">+${s.pts}점</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:#bbb;margin-top:8px;line-height:1.6">
+      * 지하철: 400m이내 3점·600m 2점·800m 1점 + 환승노선당 +1점 (최대 10점)<br>
+      * 학교: 400m이내 교당 2점·600m 1점 (최대 5점)
+    </div>
+  </div>`;
 }
 
 // ═══ 차트 ═══
