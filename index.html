@@ -518,13 +518,16 @@ function closeInfoModal() {
   if (document.getElementById('modal-noshow').checked) {
     const exp = new Date(); exp.setHours(23,59,59,0);
     localStorage.setItem('apt_modal_exp', exp.getTime());
+    localStorage.setItem('apt_modal_ver', '20260417b');
   }
   ov.style.transition = 'opacity .2s'; ov.style.opacity = '0';
   setTimeout(() => ov.style.display = 'none', 200);
 }
 (function(){
+  const MODAL_VER = '20260417b'; // 업데이트 시 이 값만 바꾸면 모달 다시 뜸
+  const savedVer = localStorage.getItem('apt_modal_ver');
   const exp = localStorage.getItem('apt_modal_exp');
-  if (exp && Date.now() < +exp)
+  if (savedVer === MODAL_VER && exp && Date.now() < +exp)
     document.getElementById('info-modal-overlay').style.display = 'none';
 })();
 
