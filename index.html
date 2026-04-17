@@ -880,7 +880,7 @@ function renderTabContent(apt,period){
       <div class="compare-row"><span>기회비용 (연 4%)</span><span>+4.0%/년</span></div>
       <div class="compare-row this-apt"><span>이 아파트</span><span>${cs(real)}%/년</span></div>
     </div>
-    <div class="chart-title">실거래가 추이 (${t10?'2016':'2021'}-03=100 기준)</div>
+    <div class="chart-title">실거래가 추이 (${t10?'2016':'2021'} 전후 평균=100 기준)</div>
     <div class="chart-wrap"><canvas id="chart-${period}"></canvas></div>`;
 }
 
@@ -902,24 +902,29 @@ function drawChart(apt,period){
   while(y<ey||(y===ey&&m<=em)){ months.push(`${y}${String(m).padStart(2,'0')}`); m++; if(m>12){m=1;y++;} }
   const labels=months.map(ym=>`${ym.slice(0,4)}.${ym.slice(4,6)}`);
 
-  let priceBase=null,priceBaseYm=null;
-  for(let d=0;d<=6;d++){
-    for(const sg of[0,1,-1]){
-      if(sg===0&&d!==0) continue;
-      const dd=sg>=0?d:-d;
-      let [by,bm]=[+startYm.slice(0,4),+startYm.slice(4,6)+dd];
-      while(bm>12){bm-=12;by++;} while(bm<1){bm+=12;by--;}
-      const c=`${String(by).padStart(4,'0')}${String(bm).padStart(2,'0')}`;
-      if(prices[c]){priceBase=prices[c];priceBaseYm=c;break;}
-    }
-    if(priceBase) break;
-  }
-  // ±6개월 내 거래 없으면 → 기간 내 첫 거래를 베이스로 (상대 변동만 표시)
+  // CAGR 계산과 동일한 기준가 사용 (±15개월 중위값) → 차트와 등급 일치
+  const storedBase = t10 ? apt.bp10 : apt.bp5;
+  let priceBase = storedBase || null;
+  let priceBaseYm = startYm; // CPI 기준은 항상 시작월 사용
+  // 기준가 없으면(has_10y/has_5y=0인 단지) 기존 방식으로 fallback
   const usedFallback = !priceBase;
   if(!priceBase){
-    for(const ym of months){ if(prices[ym]){ priceBase=prices[ym]; priceBaseYm=ym; break; } }
+    for(let d=0;d<=6;d++){
+      for(const sg of[0,1,-1]){
+        if(sg===0&&d!==0) continue;
+        const dd=sg>=0?d:-d;
+        let [by,bm]=[+startYm.slice(0,4),+startYm.slice(4,6)+dd];
+        while(bm>12){bm-=12;by++;} while(bm<1){bm+=12;by--;}
+        const c=`${String(by).padStart(4,'0')}${String(bm).padStart(2,'0')}`;
+        if(prices[c]){priceBase=prices[c];priceBaseYm=c;break;}
+      }
+      if(priceBase) break;
+    }
+    if(!priceBase){
+      for(const ym of months){ if(prices[ym]){ priceBase=prices[ym]; priceBaseYm=ym; break; } }
+    }
   }
-  const cpiBaseAct=(priceBaseYm&&cpiData[priceBaseYm])?cpiData[priceBaseYm]:(cpiData[startYm]||100);
+  const cpiBaseAct=(cpiData[priceBaseYm])?cpiData[priceBaseYm]:(cpiData[startYm]||100);
   const pCnt=Object.keys(prices).filter(ym=>ym>=startYm&&ym<=endYm).length;
   const sparse=pCnt<20;
 
