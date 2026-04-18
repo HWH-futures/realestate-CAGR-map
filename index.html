@@ -94,6 +94,13 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
 .fbtn.active[data-g="D"] { background:#D32F2F; color:#fff; }
 .fbtn.active[data-g="E"] { background:#757575; color:#fff; }
 .filter-sep { width:1px; height:20px; background:#e0e0e0; margin:0 3px; }
+.lbtn {
+  min-width:30px; height:24px; border-radius:5px; border:2px solid #0891b2;
+  font-size:10px; font-weight:800; cursor:pointer;
+  transition:all .15s; opacity:.35; padding:0 4px;
+  background:transparent; color:#0891b2;
+}
+.lbtn.active { opacity:1; background:#0891b2; color:#fff; }
 #filter-reset {
   font-size:11px; padding:3px 9px; border-radius:5px;
   background:#f0f0f0; border:1px solid #ddd; cursor:pointer;
@@ -324,7 +331,7 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
           <tr>
             <td><span class="mg-badge" style="background:#1976D2">S</span></td>
             <td>서울 평균 × 2 이상 <small style="color:#999">(≈+8.7%/년)</small></td>
-            <td>압도적 수익 — 전국 최상위 2%</td>
+            <td>압도적 수익 — 약 197개 단지 (1.7%)</td>
           </tr>
           <tr>
             <td><span class="mg-badge" style="background:#388E3C">A</span></td>
@@ -343,12 +350,12 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
           </tr>
           <tr>
             <td><span class="mg-badge" style="background:#D32F2F">D</span></td>
-            <td>실질 0% 이하</td>
+            <td>실질 -2% ~ 0%</td>
             <td>실질 손실 구간</td>
           </tr>
           <tr>
             <td><span class="mg-badge" style="background:#757575">E</span></td>
-            <td>실질 -2% 이하</td>
+            <td>실질 -2% 미만</td>
             <td>심각한 실질 손실</td>
           </tr>
         </table>
@@ -359,12 +366,12 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
         <p style="font-size:12px;color:#777;margin-bottom:8px">수도권 전체 단지 중 <strong>상대 순위(퍼센타일)</strong>로 평가한다</p>
         <table class="modal-grade-table">
           <tr><th>등급</th><th>순위 구간</th><th>설명</th></tr>
-          <tr><td><span class="mg-badge" style="background:#1976D2">S</span></td><td>상위 5%</td><td>하락장 속 압도적 성과</td></tr>
-          <tr><td><span class="mg-badge" style="background:#388E3C">A</span></td><td>상위 5~15%</td><td>우수한 성과</td></tr>
-          <tr><td><span class="mg-badge" style="background:#F9A825;color:#333">B</span></td><td>상위 15~40%</td><td>평균 이상</td></tr>
-          <tr><td><span class="mg-badge" style="background:#F57C00">C</span></td><td>상위 40~70%</td><td>중하위권</td></tr>
-          <tr><td><span class="mg-badge" style="background:#D32F2F">D</span></td><td>상위 70~90%</td><td>하위권</td></tr>
-          <tr><td><span class="mg-badge" style="background:#757575">E</span></td><td>하위 10%</td><td>최하위 성과</td></tr>
+          <tr><td><span class="mg-badge" style="background:#1976D2">S</span></td><td>상위 3%</td><td>하락장 속 압도적 성과 — 약 390개 단지</td></tr>
+          <tr><td><span class="mg-badge" style="background:#388E3C">A</span></td><td>상위 3~10%</td><td>우수한 성과</td></tr>
+          <tr><td><span class="mg-badge" style="background:#F9A825;color:#333">B</span></td><td>상위 10~30%</td><td>평균 이상</td></tr>
+          <tr><td><span class="mg-badge" style="background:#F57C00">C</span></td><td>상위 30~60%</td><td>중위권</td></tr>
+          <tr><td><span class="mg-badge" style="background:#D32F2F">D</span></td><td>상위 60~85%</td><td>하위권</td></tr>
+          <tr><td><span class="mg-badge" style="background:#757575">E</span></td><td>하위 15%</td><td>최하위 성과</td></tr>
         </table>
         <div class="modal-note">
           💡 2021~2026년은 부동산 하락 이후 회복 장세다. 절대 수익보다 <strong>얼마나 잘 버텼고 먼저 회복했느냐</strong>는 상대 순위가 더 정확한 평가 기준이다.
@@ -388,7 +395,7 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
           <li><strong>기간 미충족</strong>: 신축 단지로 분석 기간(10년/5년)에 데이터가 없음</li>
           <li><strong>거래 희소</strong>: 기준 시점(2016-03, 2021-03, 2026-03) 전후 거래 없음</li>
           <li><strong>주소 미매칭</strong>: 카카오 지오코딩 실패 (단지명 특수문자 등)</li>
-          <li>동탄(화성시) 등 일부 지역은 API 이슈로 데이터 수집 중</li>
+          <li><strong>누락 단지 제보</strong>: 좌표 오류·주소 미매칭으로 빠진 단지는 아래 블로그 댓글로 알려주세요</li>
         </ul>
       </div>
 
@@ -459,6 +466,16 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
     <button class="fbtn" data-p="5" data-g="E" onclick="toggleFilter('5','E')">E</button>
   </div>
   <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">입지</span>
+    <button class="lbtn" data-v="80" onclick="toggleLocFilter(80)">80↑</button>
+    <button class="lbtn" data-v="70" onclick="toggleLocFilter(70)">70↑</button>
+    <button class="lbtn" data-v="60" onclick="toggleLocFilter(60)">60↑</button>
+    <button class="lbtn" data-v="50" onclick="toggleLocFilter(50)">50↑</button>
+    <button class="lbtn" data-v="40" onclick="toggleLocFilter(40)">40↑</button>
+    <button class="lbtn" data-v="30" onclick="toggleLocFilter(30)">30↑</button>
+  </div>
+  <div class="filter-sep"></div>
   <button id="filter-reset" onclick="resetFilters()">전체</button>
   <div id="area-badge">
     <span id="area-badge-text"></span>
@@ -486,15 +503,15 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
         <div class="gl-row"><div class="gl-badge grade-A">A</div><div class="gl-desc"><strong>서울평균↑</strong> <span style="color:#aaa">(≈+4.4%)</span></div></div>
         <div class="gl-row"><div class="gl-badge grade-B">B</div><div class="gl-desc"><strong>기회비용↑</strong> <span style="color:#aaa">(+1.7%)</span></div></div>
         <div class="gl-row"><div class="gl-badge grade-C">C</div><div class="gl-desc"><strong>실질 0%↑</strong> 인플레 헷지</div></div>
-        <div class="gl-row"><div class="gl-badge grade-D">D</div><div class="gl-desc"><strong>0% 이하</strong> 손실 구간</div></div>
-        <div class="gl-row"><div class="gl-badge grade-E">E</div><div class="gl-desc"><strong>-2% 이하</strong> 심각 손실</div></div>
+        <div class="gl-row"><div class="gl-badge grade-D">D</div><div class="gl-desc"><strong>-2%~0%</strong> 손실 구간</div></div>
+        <div class="gl-row"><div class="gl-badge grade-E">E</div><div class="gl-desc"><strong>-2% 미만</strong> 심각 손실</div></div>
         <div style="padding:4px 12px 6px;font-size:11px;font-weight:700;color:#888;border-top:1px solid #f5f5f5;margin-top:4px">5년 (상대 순위)</div>
-        <div class="gl-row"><div class="gl-badge grade-S">S</div><div class="gl-desc">상위 <strong>5%</strong></div></div>
-        <div class="gl-row"><div class="gl-badge grade-A">A</div><div class="gl-desc">상위 <strong>5~15%</strong></div></div>
-        <div class="gl-row"><div class="gl-badge grade-B">B</div><div class="gl-desc">상위 <strong>15~40%</strong></div></div>
-        <div class="gl-row"><div class="gl-badge grade-C">C</div><div class="gl-desc">상위 <strong>40~70%</strong></div></div>
-        <div class="gl-row"><div class="gl-badge grade-D">D</div><div class="gl-desc">상위 <strong>70~90%</strong></div></div>
-        <div class="gl-row"><div class="gl-badge grade-E">E</div><div class="gl-desc">하위 <strong>10%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-S">S</div><div class="gl-desc">상위 <strong>3%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-A">A</div><div class="gl-desc">상위 <strong>3~10%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-B">B</div><div class="gl-desc">상위 <strong>10~30%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-C">C</div><div class="gl-desc">상위 <strong>30~60%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-D">D</div><div class="gl-desc">상위 <strong>60~85%</strong></div></div>
+        <div class="gl-row"><div class="gl-badge grade-E">E</div><div class="gl-desc">하위 <strong>15%</strong></div></div>
         <div style="padding:6px 12px 4px;color:#999;font-size:11px;border-top:1px solid #f0f0f0;margin-top:4px">마커: 10년 우선 → 없으면 5년</div>
       </div>
     </div>
@@ -518,13 +535,13 @@ function closeInfoModal() {
   if (document.getElementById('modal-noshow').checked) {
     const exp = new Date(); exp.setHours(23,59,59,0);
     localStorage.setItem('apt_modal_exp', exp.getTime());
-    localStorage.setItem('apt_modal_ver', '20260417b');
+    localStorage.setItem('apt_modal_ver', '20260418a');
   }
   ov.style.transition = 'opacity .2s'; ov.style.opacity = '0';
   setTimeout(() => ov.style.display = 'none', 200);
 }
 (function(){
-  const MODAL_VER = '20260417b'; // 업데이트 시 이 값만 바꾸면 모달 다시 뜸
+  const MODAL_VER = '20260418a'; // 업데이트 시 이 값만 바꾸면 모달 다시 뜸
   const savedVer = localStorage.getItem('apt_modal_ver');
   const exp = localStorage.getItem('apt_modal_exp');
   if (savedVer === MODAL_VER && exp && Date.now() < +exp)
@@ -535,12 +552,87 @@ function closeInfoModal() {
 const GRADE_COLOR = { S:'#1976D2', A:'#388E3C', B:'#F9A825', C:'#F57C00', D:'#D32F2F', E:'#757575' };
 const GRADE_TC    = { S:'#fff',    A:'#fff',    B:'#333',    C:'#fff',    D:'#fff',    E:'#fff'    };
 
+// ═══ 입지점수 캐시 & 랭킹 상수 ═══
+const _locScoreCache = {};
+const GRADE_RANK = {S:6,A:5,B:4,C:3,D:2,E:1};
+
+// ═══ 입지분석 전역 상수 (computeAptLocScore에서 사용) ═══
+const FLAGSHIP_PARKS=new Set([
+  '올림픽공원','서울숲','선유도공원','노을공원','하늘공원','월드컵공원',
+  '북서울꿈의숲','서울대공원','인천대공원','소래습지생태공원',
+  '일산호수공원','광교호수공원','광교중앙공원','동탄호수공원',
+  '동탄 센트럴파크','동탄센트럴파크','노작공원','노작호수공원',
+  '판교중앙공원','분당중앙공원','판교호수공원',
+  '청라호수공원','하늘호수공원','검단호수공원','부천중앙공원',
+  '평촌중앙공원','중앙공원','성남중앙공원','안양예술공원',
+  '뚝섬한강공원','반포한강공원','망원한강공원','여의도한강공원',
+  '잠실한강공원','광나루한강공원','이촌한강공원','강서한강공원',
+  '난지한강공원','양화한강공원','암사한강공원','고덕한강공원',
+  '용산가족공원','보라매공원','어린이대공원','남산공원',
+]);
+const PARK_TIERS={
+  'flagship_park':     {d1:800,p1:5,d2:1500,p2:3},
+  'large_park':        {d1:600,p1:4,d2:1000,p2:2},
+  'neighborhood_park': {d1:400,p1:3,d2:600, p2:1},
+  'sports_park':       {d1:400,p1:3,d2:600, p2:1},
+  'small_park':        {d1:300,p1:1},
+};
+const PARK_LABEL={'flagship_park':'랜드마크공원','large_park':'대형공원','neighborhood_park':'근린공원','sports_park':'체육공원','small_park':'소공원'};
+const CIVIC_TIERS={
+  'fire_station':    {d1:1000,p1:4, d2:3000,p2:2},
+  'police':          {d1:600, p1:4, d2:1000, p2:3, d3:3000, p3:2},
+  'district_office': {d1:1000,p1:2},
+  'community_center':{d1:600, p1:2},
+  'kindergarten':    {d1:400, p1:1},
+  'bank':            {d1:600, p1:1},
+  'daiso':           {d1:400, p1:2, d2:600, p2:1},
+  'starbucks':       {d1:400, p1:2, d2:600, p2:1},
+  'olive_young':     {d1:400, p1:2, d2:600, p2:1},
+};
+const CIVIC_EMOJI={
+  'fire_station':'🚒','police':'👮','district_office':'🏛',
+  'community_center':'🏢','kindergarten':'🧒','bank':'🏦',
+  'daiso':'🏪','starbucks':'☕','olive_young':'💄'
+};
+const CIVIC_LABEL={
+  'fire_station':'소방서·119','police':'경찰·파출소','district_office':'구청·시청',
+  'community_center':'주민센터','kindergarten':'어린이집·유치원','bank':'은행',
+  'daiso':'다이소','starbucks':'스타벅스','olive_young':'올리브영'
+};
+const SCH_LABEL ={'gifted':'영재학교','science':'과학고','foreign':'외고','international':'국제고','autonomous':'자사고','arts':'예술고','meister':'마이스터','vocational':'특성화','general':''};
+const SCH_COLOR ={'gifted':'#7c3aed','science':'#0369a1','foreign':'#b45309','international':'#0f766e','autonomous':'#1d4ed8','arts':'#be185d','meister':'#64748b','vocational':'#64748b','general':'#16a34a'};
+const SCH_BONUS ={'gifted':3,'science':3,'foreign':3,'international':3,'autonomous':3,'arts':1,'meister':0,'vocational':0,'general':0};
+const POI_LABEL={
+  'dept_store':'백화점','shopping_mall':'복합쇼핑몰','hypermart':'대형마트',
+  'terminal':'터미널','ktx_station':'고속철도역',
+  'univ_hospital':'대학병원','stadium':'경기장'
+};
+const POI_EMOJI={
+  'dept_store':'🏬','shopping_mall':'🛍','hypermart':'🛒',
+  'terminal':'🚌','ktx_station':'🚄',
+  'univ_hospital':'🏥','stadium':'🏟'
+};
+const POI_TIERS={
+  'dept_store':   {cat:'comm',pts600:10,pts1k:6},
+  'shopping_mall':{cat:'comm',pts600:10,pts1k:6},
+  'ktx_station':  {cat:'comm',pts600:6, pts1k:4},
+  'hypermart':    {cat:'comm',pts600:4, pts1k:2},
+  'terminal':     {cat:'comm',pts600:6, pts1k:4},
+  'univ_hospital':{cat:'civic',pts600:8,pts1k:6,pts3k:4},
+  'stadium':      {cat:'cult',pts600:2,pts1k:1},
+};
+
 // ═══ 전역 상태 ═══
 let aptData={}, chartData={}, cpiData={}, fxData={}, oppData={}, statsData={};
 let aptData_ = [];          // 배열 형태
 let allMarkers = [];
 let subwayData = [];        // 지하철역
 let schoolData = [];        // 학교
+let specialPoiData = [];    // 특수입지 POI
+let parkData = [];          // 공원
+let civicData = [];         // 생활편의시설
+let workerScoreData = {};   // 동 내 종사자 수 점수 (apt_key → score)
+let lifestyleData = [];     // 다이소·스타벅스·올리브영 (lifestyle_poi.json)
 let sorted5yList = [];
 let map, clusterGroup;
 let activeApt = null;
@@ -553,6 +645,20 @@ let areaFilter = null;  // {type:'d'|'g'|'s', value, label}
 
 // 지역 인덱스
 let areaIndex = [];
+
+// 지역 순위 상태
+let _areaRankState = null; // {filter, sorted}
+let activeLocScore = 0;   // 입지점수 최소값 필터 (0=비활성)
+
+// ─── 입지점수 비교 함수 ───
+function _aptRankCmp(a, b) {
+  const sa = (_locScoreCache[a.k]?.totalScore??-1);
+  const sb = (_locScoreCache[b.k]?.totalScore??-1);
+  if(sa!==sb) return sb-sa;
+  const ga = GRADE_RANK[a.gr5||'']??0, gb = GRADE_RANK[b.gr5||'']??0;
+  if(ga!==gb) return gb-ga;
+  return (b.tc||0)-(a.tc||0);
+}
 
 // ═══ 5년 순위 ═══
 function build5yRankList() {
@@ -583,7 +689,8 @@ function interpolateCPI(data) {
 }
 
 // ═══ 데이터 로드 ═══
-async function loadJSON(p){ const r=await fetch(p); if(!r.ok) throw new Error(p+' 없음'); return r.json(); }
+const _CACHE_BUST = Date.now();
+async function loadJSON(p){ const r=await fetch(p+'?v='+_CACHE_BUST); if(!r.ok) throw new Error(p+' 없음'); return r.json(); }
 
 async function loadAll(){
   setLoading('데이터 로딩 중...');
@@ -596,10 +703,16 @@ async function loadAll(){
       loadJSON('opportunity_cost.json').catch(()=>({})),
     ]);
     statsData = await loadJSON('stats_summary.json').catch(()=>({}));
-    [subwayData, schoolData] = await Promise.all([
+    [subwayData, schoolData, specialPoiData, parkData, civicData, workerScoreData, lifestyleData] = await Promise.all([
       loadJSON('subway_stations.json').catch(()=>[]),
       loadJSON('schools.json').catch(()=>[]),
+      loadJSON('special_poi.json').catch(()=>[]),
+      loadJSON('parks.json').catch(()=>[]),
+      loadJSON('civic.json').catch(()=>[]),
+      loadJSON('worker_scores.json').catch(()=>({})),
+      loadJSON('lifestyle_poi.json').catch(()=>[]),
     ]);
+    subwayData = mergeSubwayStations(subwayData); // 물리 동일역 병합
     cpiData = interpolateCPI(cpiData);
     build5yRankList();
     buildAreaIndex();
@@ -636,6 +749,10 @@ function isVisible(apt){
     else ok=(apt.s||'').includes(value);
     if(!ok) return false;
   }
+  if(activeLocScore>0){
+    const sc=_locScoreCache[apt.k];
+    if(!sc||sc.totalScore<activeLocScore) return false;
+  }
   const h10=activeGr10.size>0, h5=activeGr5.size>0;
   if(!h10&&!h5) return true;
   if(!apt.gr10&&!apt.gr5) return false;
@@ -649,7 +766,23 @@ function toggleFilter(p,g){
   s.has(g)?s.delete(g):s.add(g);
   applyFilters();
 }
-function resetFilters(){ activeGr10.clear(); activeGr5.clear(); clearAreaFilter(); }
+function toggleLocFilter(v){
+  if(activeLocScore===v){ activeLocScore=0; applyFilters(); updateFilterUI(); return; }
+  activeLocScore=v;
+  _computeAllScoresThenFilter();
+}
+async function _computeAllScoresThenFilter(){
+  const cntEl=document.getElementById('filter-count');
+  if(cntEl) cntEl.textContent='입지점수 계산 중...';
+  const BATCH=50;
+  for(let i=0;i<aptData_.length;i+=BATCH){
+    aptData_.slice(i,i+BATCH).forEach(a=>{if(_locScoreCache[a.k]==null) computeAptLocScore(a);});
+    await new Promise(r=>setTimeout(r,0));
+  }
+  applyFilters();
+  updateFilterUI();
+}
+function resetFilters(){ activeGr10.clear(); activeGr5.clear(); activeLocScore=0; clearAreaFilter(); }
 function clearAreaFilter(){
   areaFilter=null;
   document.getElementById('area-input').value='';
@@ -669,7 +802,10 @@ function updateFilterUI(){
     const s=b.dataset.p==='10'?activeGr10:activeGr5;
     b.classList.toggle('active',s.has(b.dataset.g));
   });
-  const hasAny=activeGr10.size||activeGr5.size||areaFilter;
+  document.querySelectorAll('.lbtn').forEach(b=>{
+    b.classList.toggle('active',parseInt(b.dataset.v)===activeLocScore);
+  });
+  const hasAny=activeGr10.size||activeGr5.size||areaFilter||activeLocScore;
   document.getElementById('filter-reset').classList.toggle('has-filter',!!hasAny);
   const badge=document.getElementById('area-badge');
   if(areaFilter){
@@ -720,6 +856,72 @@ function selectArea(r){
     map.fitBounds([[Math.min(...lats)-.01,Math.min(...lons)-.01],[Math.max(...lats)+.01,Math.max(...lons)+.01]],{maxZoom:15,padding:[20,20]});
   }
   applyFilters();
+  // 지역 순위 패널 표시
+  _showAreaRankingPanel(r, pts);
+}
+
+async function _showAreaRankingPanel(filter, areaApts) {
+  document.getElementById('panel-placeholder').style.display='none';
+  const pc=document.getElementById('panel-content');
+  pc.style.display='flex';
+  const tl={s:'시/도',g:'구/군',d:'동/읍/면'};
+  pc.innerHTML=`<div style="padding:20px;text-align:center;color:#888">
+    <div class="spinner" style="margin:0 auto 12px"></div>
+    <div style="font-size:13px">${esc(filter.value)} 입지 점수 계산 중...<br><small style="font-size:11px;color:#bbb">${areaApts.length}개 단지</small></div>
+  </div>`;
+
+  const BATCH=25;
+  for(let i=0;i<areaApts.length;i+=BATCH){
+    const batch=areaApts.slice(i,i+BATCH);
+    batch.forEach(apt=>computeAptLocScore(apt));
+    await new Promise(r=>setTimeout(r,0));
+  }
+
+  const sorted=[...areaApts].sort(_aptRankCmp);
+  _areaRankState={filter,sorted};
+  _renderAreaPanel();
+}
+
+function _renderAreaPanel(){
+  if(!_areaRankState) return;
+  const {filter,sorted}=_areaRankState;
+  const tl={s:'시/도',g:'구/군',d:'동/읍/면'};
+  document.getElementById('panel-placeholder').style.display='none';
+  const pc=document.getElementById('panel-content');
+  pc.style.display='flex';
+
+  const mkMiniG=(g,lbl)=>g?`<span style="background:${GRADE_COLOR[g]||'#888'};color:${GRADE_TC[g]||'#fff'};font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;white-space:nowrap">${lbl}:${g}</span>`:'';
+
+  pc.innerHTML=`
+  <div class="panel-header" style="padding:14px 16px 10px">
+    <div style="font-size:15px;font-weight:700">📊 ${esc(filter.value)} 입지 순위</div>
+    <div style="font-size:11px;color:#888;margin-top:3px">${tl[filter.type]||''} · ${sorted.length}개 단지 · 입지점수 기준</div>
+  </div>
+  <div style="overflow-y:auto;flex:1">
+    ${sorted.map((apt,i)=>{
+      const sc=_locScoreCache[apt.k];
+      const score=sc?.totalScore??'-';
+      return `<div onclick="_showPanelFromArea('${apt.k.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:8px;padding:9px 14px;cursor:pointer;border-bottom:1px solid #f5f5f5" onmouseover="this.style.background='#f8f9ff'" onmouseout="this.style.background=''">
+        <div style="font-size:16px;font-weight:800;color:${i<3?'#f59e0b':'#ccc'};min-width:28px;text-align:right;flex-shrink:0">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(apt.n)}</div>
+          <div style="font-size:11px;color:#aaa;margin-top:1px">${esc(apt.d)} · 거래 ${apt.tc||0}건</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
+          <div style="font-size:13px;font-weight:800;color:#1a1a2e">📍${score}<span style="font-size:10px;font-weight:400;color:#aaa">점</span></div>
+          <div style="display:flex;gap:3px">${mkMiniG(apt.gr10,'10Y')}${mkMiniG(apt.gr5,'5Y')}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function _showPanelFromArea(aptKey){
+  const apt=aptData_.find(a=>a.k===aptKey);
+  if(apt){
+    if(apt.la&&apt.lo) map.setView([apt.la,apt.lo],16);
+    showPanel(apt,true);
+  }
 }
 
 // ═══ 지도 초기화 ═══
@@ -806,8 +1008,23 @@ function renderMarkers(){
   setTimeout(nextChunk,0);
 }
 
+// ─── 동/구 내 순위 계산 ───
+function _getRank(apt, type) {
+  const peers = aptData_.filter(a => {
+    if(!a.la) return false;
+    if(type==='d') return a.d===apt.d;
+    return (a.g||'')===(apt.g||'');
+  });
+  if(type==='g' && peers.length > 800) return null;
+  peers.forEach(a => { if(_locScoreCache[a.k]==null) computeAptLocScore(a); });
+  peers.sort(_aptRankCmp);
+  const idx = peers.findIndex(a=>a.k===apt.k);
+  return idx>=0 ? {rank:idx+1, total:peers.length} : null;
+}
+
 // ═══ 상세 패널 ═══
-function showPanel(apt){
+function showPanel(apt, fromArea=false){
+  activeApt=apt;
   document.getElementById('panel-placeholder').style.display='none';
   const pc=document.getElementById('panel-content');
   pc.style.display='flex';
@@ -818,33 +1035,42 @@ function showPanel(apt){
     ?`<span class="grade-badge grade-${g}" style="flex-direction:column;gap:0;width:36px;height:36px;font-size:14px"><span style="font-size:8px;font-weight:600;opacity:.85;line-height:1">${lbl}</span><span style="font-size:14px;font-weight:800;line-height:1">${g}</span></span>`
     :`<span class="grade-badge grade-N" style="flex-direction:column;gap:0;width:36px;height:36px;font-size:11px"><span style="font-size:8px;opacity:.7;line-height:1">${lbl}</span><span style="line-height:1">—</span></span>`;
 
-  const header=`<div class="panel-header">
+  const backBtn = fromArea && _areaRankState ? `<div style="padding:8px 16px 0"><button onclick="_renderAreaPanel()" style="font-size:12px;color:#666;background:#f5f7ff;border:1px solid #e0e4ff;border-radius:6px;padding:4px 10px;cursor:pointer">← ${esc(_areaRankState.filter.value)} 순위로</button></div>` : '';
+
+  // 동/구 순위 계산
+  const dongRank = _getRank(apt,'d');
+  const guRank = _getRank(apt,'g');
+  const rankLine = (dongRank||guRank) ? `<div style="margin-top:4px;font-size:12px;color:#555">${dongRank?`<span style="color:#1a1a2e;font-weight:700">${dongRank.rank}위</span>/<span style="color:#aaa">${dongRank.total}</span> (동내) `:''} ${guRank?`<span style="color:#1a1a2e;font-weight:700">${guRank.rank}위</span>/<span style="color:#aaa">${guRank.total}</span> (구내)`:''}</div>` : '';
+
+  const header=`${backBtn}<div class="panel-header">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
       <div class="panel-title" style="flex:1;margin-bottom:0">${esc(apt.n)}</div>
       <div style="display:flex;gap:6px;flex-shrink:0">${mkBadge(g10,'10Y')}${mkBadge(g5,'5Y')}</div>
     </div>
     <div class="panel-addr" style="margin-top:6px">${esc(apt.s)} ${esc(apt.g)} ${esc(apt.d)}</div>
-    <div class="panel-meta">거래 ${apt.tc||0}건 · ${apt.fy?apt.fy.slice(0,4):'-'}~${apt.ly?apt.ly.slice(0,4):'-'}</div>
+    <div class="panel-meta">거래 ${apt.tc||0}건 · ${apt.fy?apt.fy.slice(0,4):'-'}~${apt.ly?apt.ly.slice(0,4):'-'}${apt.by?(()=>{const by=apt.by;const[tag,bg]=by>=2021?['신축','#0f766e']:by>=2011?['준신축','#2563eb']:by>=1997?['구축','#d97706']:['노후','#9f1239'];return` · <span style="color:#888">준공 ${by}년</span> <span style="background:${bg};color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;vertical-align:middle">${tag}</span>`;})():''}${rankLine}</div>
   </div>`;
 
   if(!hasAny){
-    pc.innerHTML=header+`<div class="nodata-panel">
-      <div class="nodata-card ${isNew?'is-new':'is-none'}">
-        <div class="nodata-title">${isNew?'🏗 신축 단지 (수익률 계산 불가)':'⚠ 수익률 계산 불가'}</div>
-        ${isNew
-          ?`<div>첫 거래 확인: <strong>${apt.fy?apt.fy.slice(0,4)+'년 '+apt.fy.slice(4,6)+'월':'미확인'}</strong></div>
-            <div style="margin-top:6px;color:#888;font-size:12px">분석 기준 시점(2021년 3월) 이전 거래 데이터가 없어<br>수익률 계산이 불가합니다.</div>`
-          :`<div>거래 ${apt.tc||0}건 확인</div>
-            <div style="margin-top:6px;color:#888;font-size:12px">기준 시점(2016-03 또는 2021-03) 전후로<br>거래 데이터가 없어 CAGR 계산이 불가합니다.</div>`
-        }
+    pc.innerHTML=header+`
+      <div style="padding:10px 16px 4px">
+        <div class="nodata-card ${isNew?'is-new':'is-none'}" style="margin-bottom:0">
+          <div class="nodata-title">${isNew?'🏗 신축 단지 (수익률 계산 불가)':'⚠ 수익률 계산 불가'}</div>
+          <div style="font-size:12px;color:#888;margin-top:4px">${isNew
+            ?`분석 기준 시점(2021-03) 이전 거래 없음`
+            :`기준 시점 전후 거래 부족 · CAGR 계산 불가`
+          } · 입지분석은 제공됩니다</div>
+        </div>
       </div>
-      <div style="font-size:13px;color:#555">단지 정보 오류나 데이터 제보는 아래 블로그로 남겨주세요.</div>
-      <a class="modal-blog-link" href="https://blog.naver.com/hwh_gusdn524/224255476886" target="_blank" rel="noopener">
-        <span style="font-size:18px">📝</span>
-        <div><div>제보하기</div><div style="font-size:11px;font-weight:400;color:#4a90d9">blog.naver.com/hwh_gusdn524/224255476886</div></div>
-        <span style="margin-left:auto">→</span>
-      </a>
-    </div>`;
+      <div class="tabs">
+        <button class="tab-btn" style="opacity:.3;pointer-events:none">10년 분석</button>
+        <button class="tab-btn" style="opacity:.3;pointer-events:none">5년 분석</button>
+        <button class="tab-btn active" onclick="switchTab('loc')">📍 입지</button>
+      </div>
+      <div id="tab-10y" class="tab-panel"></div>
+      <div id="tab-5y"  class="tab-panel"></div>
+      <div id="tab-loc" class="tab-panel active"></div>`;
+    setTimeout(()=>renderLocationTab(apt), 50);
     return;
   }
 
@@ -908,63 +1134,280 @@ function switchTab(period){
 }
 
 // ═══ 입지분석 ═══
+
+// ── 노선별 기본점수 ──────────────────
+const LINE_SCORE = {
+  // 10점: CBD/YBD/GBD 직통 핵심 노선
+  '2호선':10,'3호선':10,'5호선':10,'7호선':10,'9호선':10,'신분당선':10,'GTX-A':10,
+  // 6점: 급행·도심연결 노선
+  '4호선':6,'수인·분당선':6,'경의·중앙선':6,'공항철도':6,'경춘선':6,'신림선':6,
+  // 4점: 일반 서울 노선
+  '6호선':4,'서해선':4,'우이신설선':4,'경강선':4,
+  // 2점: 서울 외 경전철
+  '인천 1호선':2,'인천 2호선':2,'의정부경전철':2,'용인에버라인':2,'김포골드라인':2,
+};
+// 1호선: 급행 정차역=6점, 일반역=4점
+const LINE1_EXPRESS = new Set([
+  // 경부선 급행
+  '서울역','용산역','영등포역','구로역','금천구청역','석수역','관악역','안양역','군포역','당정역','의왕역','성균관대역','화서역','수원역',
+  // 경인선 급행
+  '오류동역','온수역','역곡역','소사역','부천역','중동역','송내역','부개역','백운역','동암역','간석역','주안역','도화역','제물포역','도원역','동인천역','인천역',
+  // 경원선 급행
+  '청량리역','회기역','외대앞역','신이문역','석계역','광운대역','월계역','녹천역','창동역','방학역','도봉역','도봉산역','망월사역','회룡역','의정부역',
+]);
+
+function getLineScore(stationName, line){
+  if(line==='1호선') return LINE1_EXPRESS.has(stationName)?6:4;
+  return LINE_SCORE[line]||2;
+}
+
+// ── 물리 동일역 병합 (150m 이내 역사 = 같은 역) ──────────────────
+function mergeSubwayStations(stations){
+  const used=new Set(), merged=[];
+  for(let i=0;i<stations.length;i++){
+    if(used.has(i)) continue;
+    const base={...stations[i], lines:[...stations[i].lines]};
+    used.add(i);
+    for(let j=i+1;j<stations.length;j++){
+      if(used.has(j)) continue;
+      const d=haversine(base.lat,base.lng,stations[j].lat,stations[j].lng);
+      if(d<150){
+        // 같은 역사 → 없는 노선만 추가
+        stations[j].lines.forEach(l=>{ if(!base.lines.includes(l)) base.lines.push(l); });
+        used.add(j);
+      }
+    }
+    merged.push(base);
+  }
+  return merged;
+}
+
 function haversine(lat1,lng1,lat2,lng2){
   const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
   return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
-function renderLocationTab(apt){
-  const el=document.getElementById('tab-loc');
-  if(!el) return;
-  const lat=apt.la, lng=apt.lo;
-  if(!lat||!lng){ el.innerHTML='<div style="padding:24px;color:#aaa;text-align:center">좌표 정보 없음</div>'; return; }
+// ─── 더보기 버튼 생성 헬퍼 ───
+function moreBtn(key, total, limit=5) {
+  if (total <= limit) return '';
+  const safeKey = key.replace(/[^a-zA-Z0-9]/g,'_');
+  return `<button onclick="(function(){var rows=document.querySelectorAll('.${safeKey}-row');var btn=this;var hidden=Array.from(rows).filter(function(r){return r.style.display==='none'});if(hidden.length>0){hidden.forEach(function(r){r.style.display='flex'});btn.textContent='접기 ▲';}else{Array.from(rows).slice(${limit}).forEach(function(r){r.style.display='none'});btn.textContent='더보기 (${total-limit}개) ▼';}}).call(this)" style="margin-top:4px;font-size:11px;color:#888;background:none;border:1px solid #e5e7eb;border-radius:4px;padding:3px 10px;cursor:pointer;width:100%;text-align:center">더보기 (${total-limit}개) ▼</button>`;
+}
 
-  // ── 지하철 점수 (max 10) ──────────────────
+// ─── 입지 점수 계산 (캐시) ───
+function computeAptLocScore(apt) {
+  if (_locScoreCache[apt.k] != null) return _locScoreCache[apt.k];
+  const lat=apt.la, lng=apt.lo;
+  if(!lat||!lng) return (_locScoreCache[apt.k]=null);
+
+  // ── 지하철 점수 (max 25) ──────────────────
   const nearSubway=[];
   for(const s of subwayData){
     const d=Math.round(haversine(lat,lng,s.lat,s.lng));
-    if(d<=1000) nearSubway.push({...s,dist:d});
+    if(d<=800) nearSubway.push({...s,dist:d});
   }
   nearSubway.sort((a,b)=>a.dist-b.dist);
-
   let subScore=0;
   const subDetail=[];
   for(const s of nearSubway){
-    let base=0;
-    if(s.dist<=400) base=3;
-    else if(s.dist<=600) base=2;
-    else if(s.dist<=800) base=1;
-    if(base===0) continue;
-    const transfer=s.lines.length>1?(s.lines.length-1):0;
-    const pts=base+transfer;
+    const linePts=s.lines.map(l=>getLineScore(s.name,l));
+    const bestLine=s.lines[linePts.indexOf(Math.max(...linePts))];
+    const bestPts=Math.max(...linePts);
+    const transferBonus=Math.max(0,s.lines.length-1)*2;
+    const distBonus=s.dist<=400?4:s.dist<=500?2:0;
+    const pts=bestPts+transferBonus+distBonus;
     subScore+=pts;
-    subDetail.push({name:s.name,lines:s.lines,dist:s.dist,base,transfer,pts});
+    subDetail.push({name:s.name,lines:s.lines,dist:s.dist,bestLine,bestPts,transferBonus,distBonus,pts});
   }
-  subScore=Math.min(subScore,10);
+  subScore=Math.min(subScore,25);
 
-  // ── 학교 점수 (max 5) ──────────────────
+  // ── 학교 점수 (max 15) ──────────────────
   const nearSchool=[];
   for(const s of schoolData){
     const d=Math.round(haversine(lat,lng,s.lat,s.lng));
-    if(d<=700) nearSchool.push({...s,dist:d});
+    const isSpecial=(s.school_type&&s.school_type!=='general');
+    const radius=isSpecial?1000:600;
+    if(d<=radius) nearSchool.push({...s,dist:d});
   }
   nearSchool.sort((a,b)=>a.dist-b.dist);
-
   let schScore=0;
   const schDetail=[];
   for(const s of nearSchool){
-    let pts=0;
-    if(s.dist<=400) pts=2;
-    else if(s.dist<=600) pts=1;
-    if(pts===0) continue;
+    const stype=s.school_type||'general';
+    const base=1;
+    const bonus=SCH_BONUS[stype]||0;
+    const distBonus=s.dist<=250?2:s.dist<=400?1:0;
+    const pts=base+bonus+distBonus;
     schScore+=pts;
-    schDetail.push({name:s.name,kind:s.kind,dist:s.dist,pts});
+    schDetail.push({name:s.name,kind:s.kind,dist:s.dist,pts,type:stype,base,bonus,distBonus});
   }
-  schScore=Math.min(schScore,5);
+  // 대학교 → 학교 섹션 합산
+  for(const p of specialPoiData){
+    if(p.type!=='university') continue;
+    if(Math.abs(p.lat-lat)>0.1||Math.abs(p.lng-lng)>0.1) continue;
+    const d=Math.round(haversine(lat,lng,p.lat,p.lng));
+    if(d>1000) continue;
+    const pts=d<=600?2:1;
+    schScore+=pts;
+    schDetail.push({name:p.name,kind:'대학교',dist:d,pts,type:'university',base:pts,bonus:0,distBonus:0});
+  }
+  schDetail.sort((a,b)=>a.dist-b.dist);
+  schScore=Math.min(schScore,15);
 
-  const totalScore=subScore+schScore;
-  const maxScore=15;
+  // ── 특수입지 점수 ──────────────────
+  const nearPoi=[];
+  for(const p of specialPoiData){
+    if(p.type==='university') continue;
+    if(Math.abs(p.lat-lat)>0.1||Math.abs(p.lng-lng)>0.1) continue;
+    const d=Math.round(haversine(lat,lng,p.lat,p.lng));
+    const maxD=(POI_TIERS[p.type]?.cat==='civic')?3000:1000;
+    if(d<=maxD) nearPoi.push({...p,dist:d});
+  }
+  nearPoi.sort((a,b)=>a.dist-b.dist);
+  let commScore=0, cultScore=0;
+  const commDetail=[], cultDetail=[];
+  const univHospitalItems=[];
+  for(const p of nearPoi){
+    const tier=POI_TIERS[p.type];
+    if(!tier) continue;
+    const pts=p.dist<=600?tier.pts600:(p.dist<=1000?tier.pts1k:(tier.pts3k&&p.dist<=3000?tier.pts3k:0));
+    if(!pts&&tier.cat!=='civic') continue;
+    if(tier.cat==='comm'){commScore+=pts;commDetail.push({...p,pts});}
+    else if(tier.cat==='civic'){if(pts>0) univHospitalItems.push({...p,pts,_isHospital:true});}
+    else{cultScore+=pts;cultDetail.push({...p,pts});}
+  }
+  commScore=Math.min(commScore,20);
+
+  // ── 공원·문화시설 점수 (max 10) ──────────────────
+  const bestFlagshipByName={};
+  for(const p of parkData){
+    if(Math.abs(p.lat-lat)>0.05||Math.abs(p.lng-lng)>0.05) continue;
+    const d=Math.round(haversine(lat,lng,p.lat,p.lng));
+    const effectiveType=FLAGSHIP_PARKS.has(p.name)?'flagship_park':p.type;
+    const tier=PARK_TIERS[effectiveType];
+    if(!tier) continue;
+    const maxD=tier.d2||tier.d1;
+    if(d>maxD) continue;
+    const pts=d<=tier.d1?tier.p1:(tier.d2?tier.p2:0);
+    if(!pts) continue;
+    const distLabel=d<=tier.d1?(tier.d1+'m'):(tier.d2+'m');
+    if(effectiveType==='flagship_park'){
+      if(!bestFlagshipByName[p.name]||d<bestFlagshipByName[p.name].dist)
+        bestFlagshipByName[p.name]={...p,type:effectiveType,dist:d,pts,distLabel,_isPark:true};
+    } else {
+      cultScore+=pts;
+      cultDetail.push({...p,type:effectiveType,dist:d,pts,distLabel,_isPark:true});
+    }
+  }
+  for(const fp of Object.values(bestFlagshipByName)){
+    cultScore+=fp.pts; cultDetail.push(fp);
+  }
+  // 도서관 → 공원·문화시설 섹션
+  {
+    let bestLib=null;
+    for(const c of civicData){
+      if(c.type!=='library') continue;
+      if(Math.abs(c.lat-lat)>0.05||Math.abs(c.lng-lng)>0.05) continue;
+      const d=Math.round(haversine(lat,lng,c.lat,c.lng));
+      if(d>600) continue;
+      if(!bestLib||d<bestLib.dist) bestLib={...c,dist:d,pts:1,_isLibrary:true};
+    }
+    if(bestLib){ cultScore+=1; cultDetail.push(bestLib); }
+  }
+  cultDetail.sort((a,b)=>a.dist-b.dist);
+  cultScore=Math.min(cultScore,10);
+
+  // ── 생활편의인프라 점수 (max 15) ──────────────────
+  function _civicPts(type,d){
+    const t=CIVIC_TIERS[type]; if(!t) return 0;
+    return d<=t.d1?t.p1:(t.d2&&d<=t.d2?t.p2:(t.d3&&d<=t.d3?t.p3:0));
+  }
+  let civicScore=0;
+  const civicDetail=[];
+  // 대학병원
+  {
+    let best=null;
+    for(const p of univHospitalItems){
+      if(p.pts>0 && (!best||p.dist<best.dist)) best=p;
+    }
+    if(best){ civicDetail.push(best); civicScore+=best.pts; }
+  }
+  // 소방서/경찰/구청/주민센터/어린이집/다이소/스타벅스/올리브영
+  const bestByCivicType={};
+  const bankItems=[];
+  const allCivicSrc=[...civicData,...(lifestyleData||[])];
+  for(const c of allCivicSrc){
+    if(Math.abs(c.lat-lat)>0.05||Math.abs(c.lng-lng)>0.05) continue;
+    const tier=CIVIC_TIERS[c.type]; if(!tier) continue;
+    const d=Math.round(haversine(lat,lng,c.lat,c.lng));
+    if(c.type==='bank'){
+      if(d<=800) bankItems.push({...c,dist:d,pts:_civicPts('bank',d)});
+    } else {
+      const pts=_civicPts(c.type,d);
+      if(pts>0 && (!bestByCivicType[c.type]||d<bestByCivicType[c.type].dist))
+        bestByCivicType[c.type]={...c,dist:d,pts};
+    }
+  }
+  for(const item of Object.values(bestByCivicType)){
+    civicDetail.push(item); civicScore+=item.pts;
+  }
+  // 은행: 브랜드별 1개씩
+  bankItems.sort((a,b)=>a.dist-b.dist);
+  const seenBanks=new Set();
+  for(const b of bankItems){
+    if(!seenBanks.has(b.name)){ seenBanks.add(b.name); civicDetail.push(b); civicScore+=b.pts; }
+  }
+  civicDetail.sort((a,b)=>b.pts-a.pts||a.dist-b.dist);
+  // 0점 항목 제거
+  const civicDetailFiltered=civicDetail.filter(c=>c.pts>0);
+  civicScore=Math.min(civicScore,20);
+
+  // ── 거래 활성도 점수 (max 5) ──────────────────
+  let complexScore=0, complexLabel='';
+  {
+    const effectiveYears=Math.max(5, Math.min(2026-(apt.by||2015), 25));
+    const tpy=(apt.tc||0)/effectiveYears;
+    if(tpy>=25){complexScore=5;complexLabel='거래 활발';}
+    else if(tpy>=10){complexScore=3;complexLabel='거래 보통';}
+    else if(tpy>=2.5){complexScore=1;complexLabel='거래 낮음';}
+    else{complexScore=0;complexLabel='거래 희소';}
+  }
+
+  // ── 건축연도 점수 (max 5) ──────────────────
+  let yearScore=0, yearLabel='';
+  {
+    const by=apt.by||0;
+    if(by>=2021){yearScore=5;yearLabel=`신축 (${by}년)`;}
+    else if(by>=2011){yearScore=3;yearLabel=`준신축 (${by}년)`;}
+    else if(by>=1997){yearScore=1;yearLabel=`구축 (${by}년)`;}
+    else if(by>=1970){yearScore=0;yearLabel=`노후 (${by}년)`;}
+    else{yearScore=0;yearLabel='준공연도 미확인';}
+  }
+
+  const totalScore=subScore+schScore+commScore+cultScore+civicScore+complexScore+yearScore;
+
+  return (_locScoreCache[apt.k]={
+    totalScore, subScore, schScore, commScore, cultScore, civicScore, complexScore, yearScore,
+    subDetail, schDetail, commDetail, cultDetail, civicDetail: civicDetailFiltered,
+    complexLabel, yearLabel
+  });
+}
+
+function renderLocationTab(apt){
+  // activeApt가 바뀐 경우 stale render 방지
+  if(activeApt && apt.k !== activeApt.k) return;
+  const el=document.getElementById('tab-loc');
+  if(!el) return;
+  if(!apt.la||!apt.lo){ el.innerHTML='<div style="padding:24px;color:#aaa;text-align:center">좌표 정보 없음</div>'; return; }
+
+  const sc=computeAptLocScore(apt);
+  if(!sc){ el.innerHTML='<div style="padding:24px;color:#aaa;text-align:center">점수 계산 불가</div>'; return; }
+
+  const {totalScore,subScore,schScore,commScore,cultScore,civicScore,complexScore,yearScore,
+    subDetail,schDetail,commDetail,cultDetail,civicDetail,complexLabel,yearLabel}=sc;
+  const maxScore=100;
+  const safeKey='loc'+apt.k.replace(/[^a-zA-Z0-9]/g,'_');
 
   // ── 점수 바 렌더 ──────────────────
   function scorebar(score,max,color){
@@ -989,6 +1432,71 @@ function renderLocationTab(apt){
 
   const kindIcon={'초등학교':'🏫','중학교':'📚','고등학교':'🎓'};
 
+  // CSS 클래스용 키 (safeKey + 섹션 suffix, 모두 안전문자)
+  const schKey  = safeKey+'_sch';
+  const commKey = safeKey+'_comm';
+  const cultKey = safeKey+'_cult';
+  const civKey  = safeKey+'_civ';
+
+  // 학교 행 렌더 (더보기 적용)
+  const schRows=schDetail.map((s,i)=>{
+    const hidden=i>=5?'display:none':'display:flex';
+    if(s.type==='university'){
+      return `<div class="${schKey}-row" style="${hidden};align-items:center;gap:8px;font-size:12px">
+        <span style="color:#555;width:50px;flex-shrink:0">${s.dist}m</span>
+        <span style="font-size:13px">🎓</span>
+        <span style="flex:1">${s.name} <span style="background:#7c3aed;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px">대학교</span></span>
+        <span style="color:#7c3aed;font-weight:700;flex-shrink:0">+${s.pts}<span style="font-size:10px;font-weight:400;color:#aaa">(${s.dist<=600?'600m':'1km'})</span></span>
+      </div>`;
+    }
+    const isSpecial=s.type&&s.type!=='general';
+    const tc=SCH_COLOR[s.type]||'#16a34a';
+    const tl=SCH_LABEL[s.type]||'';
+    const icon=isSpecial?'⭐':(kindIcon[s.kind]||'🏫');
+    const ptBreakdown=`1${s.bonus?'+'+s.bonus:''}${s.distBonus?'+'+s.distBonus:''}`;
+    return `<div class="${schKey}-row" style="${hidden};align-items:center;gap:8px;font-size:12px">
+      <span style="color:#555;width:50px;flex-shrink:0">${s.dist}m</span>
+      <span style="font-size:13px">${icon}</span>
+      <span style="flex:1">${s.name}${tl?` <span style="background:${tc};color:#fff;font-size:10px;padding:1px 5px;border-radius:8px">${tl}</span>`:` <span style="color:#888;font-size:11px">${s.kind}</span>`}</span>
+      <span style="color:${tc};font-weight:700;flex-shrink:0">+${s.pts}<span style="font-size:10px;font-weight:400;color:#aaa">(${ptBreakdown})</span></span>
+    </div>`;
+  }).join('');
+
+  // 상업 행 렌더 (더보기 적용)
+  const commRows=commDetail.map((p,i)=>{
+    const hidden=i>=5?'display:none':'display:flex';
+    return `<div class="${commKey}-row" style="${hidden};align-items:center;gap:8px;font-size:12px">
+      <span style="color:#555;width:50px;flex-shrink:0">${p.dist}m</span>
+      <span>${POI_EMOJI[p.type]||'📍'}</span>
+      <span style="flex:1">${p.name} <span style="color:#888;font-size:11px">${POI_LABEL[p.type]||''}</span></span>
+      <span style="color:#7c3aed;font-weight:700;flex-shrink:0">+${p.pts}<span style="font-size:10px;font-weight:400;color:#aaa">(${p.dist<=600?'600m':'1km'})</span></span>
+    </div>`;
+  }).join('');
+
+  // 공원 행 렌더 (더보기 적용)
+  const cultRows=cultDetail.map((p,i)=>{
+    const hidden=i>=5?'display:none':'display:flex';
+    return `<div class="${cultKey}-row" style="${hidden};align-items:center;gap:8px;font-size:12px">
+      <span style="color:#555;width:50px;flex-shrink:0">${p.dist}m</span>
+      <span>${p._isLibrary?'📚':p._isPark?'🌳':(POI_EMOJI[p.type]||'📍')}</span>
+      <span style="flex:1">${p.name} <span style="color:#888;font-size:11px">${p._isLibrary?'도서관':p._isPark?(PARK_LABEL[p.type]||'공원'):(POI_LABEL[p.type]||'')}</span></span>
+      <span style="color:#0891b2;font-weight:700;flex-shrink:0">+${p.pts}<span style="font-size:10px;font-weight:400;color:#aaa">(${p.distLabel||(p.dist<=600?'600m':'1km')})</span></span>
+    </div>`;
+  }).join('');
+
+  // 생활편의 행 렌더 (더보기 적용, 처음 5개 표시)
+  const civicRows=civicDetail.map((c,i)=>{
+    const hidden=i>=5?'display:none':'display:flex';
+    const emoji=c._isHospital?'🏥':(CIVIC_EMOJI[c.type]||'🏢');
+    const label=c._isHospital?'대학병원·응급실':(CIVIC_LABEL[c.type]||'');
+    return `<div class="${civKey}-row" style="${hidden};align-items:center;gap:8px;font-size:12px;">
+      <span>${emoji}</span>
+      <span style="flex:1;color:#333">${c.name} <span style="color:#aaa;font-size:10px">${label}</span></span>
+      <span style="flex-shrink:0;font-size:11px;color:#999">${c.dist}m</span>
+      <span style="flex-shrink:0;font-weight:700;color:#d97706;min-width:28px;text-align:right">+${c.pts}<span style="font-size:9px;font-weight:400">점</span></span>
+    </div>`;
+  }).join('');
+
   el.innerHTML=`
   <div style="padding:16px">
     <!-- 총점 -->
@@ -1008,9 +1516,9 @@ function renderLocationTab(apt){
     <div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700">🚇 지하철</span>
-        <span style="font-size:13px;font-weight:800;color:#2563eb">${subScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 10</span></span>
+        <span style="font-size:13px;font-weight:800;color:#2563eb">${subScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 25</span></span>
       </div>
-      ${scorebar(subScore,10,'#3b82f6')}
+      ${scorebar(subScore,25,'#3b82f6')}
       <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
         ${subDetail.length===0
           ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 800m 내 역 없음</div>'
@@ -1019,34 +1527,99 @@ function renderLocationTab(apt){
             <span style="color:#555;width:50px;flex-shrink:0">${s.dist}m</span>
             <span style="font-weight:600;flex-shrink:0">${s.name}</span>
             <div style="display:flex;flex-wrap:wrap;gap:3px;flex:1">${s.lines.map(lineBadge).join('')}</div>
-            <span style="color:#2563eb;font-weight:700;flex-shrink:0">+${s.pts}점</span>
+            <span style="color:#2563eb;font-weight:700;flex-shrink:0">+${s.pts}<span style="font-size:10px;color:#aaa;font-weight:400">(노선${s.bestPts}${s.transferBonus?'+환승'+s.transferBonus:''}${s.distBonus?'+거리'+s.distBonus:''})</span></span>
           </div>`).join('')}
       </div>
     </div>
 
-    <!-- 학교 -->
+    <!-- 학교 (특수학교 통합) -->
     <div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700">🏫 학교</span>
-        <span style="font-size:13px;font-weight:800;color:#16a34a">${schScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 5</span></span>
+        <span style="font-size:13px;font-weight:800;color:#16a34a">${schScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 15</span></span>
       </div>
-      ${scorebar(schScore,5,'#22c55e')}
+      ${scorebar(schScore,15,'#22c55e')}
       <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
         ${schDetail.length===0
-          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 600m 내 학교 없음</div>'
-          :schDetail.slice(0,8).map(s=>`
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px">
-            <span style="color:#555;width:50px;flex-shrink:0">${s.dist}m</span>
-            <span style="font-size:14px">${kindIcon[s.kind]||'🏫'}</span>
-            <span style="flex:1">${s.name} <span style="color:#888;font-size:11px">${s.kind}</span></span>
-            <span style="color:#16a34a;font-weight:700;flex-shrink:0">+${s.pts}점</span>
-          </div>`).join('')}
+          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 내 학교 없음</div>'
+          :schRows+moreBtn(schKey,schDetail.length)}
+      </div>
+    </div>
+
+    <!-- 대형상업·광역교통 인프라 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🏬 대형상업·광역교통 인프라</span>
+        <span style="font-size:13px;font-weight:800;color:#7c3aed">${commScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 20</span></span>
+      </div>
+      ${scorebar(commScore,20,'#7c3aed')}
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        ${commDetail.length===0
+          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 1km 내 대형상업·광역교통 시설 없음</div>'
+          :commRows+moreBtn(commKey,commDetail.length)}
+      </div>
+    </div>
+
+    <!-- 공원·문화시설 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🌳 공원·문화시설</span>
+        <span style="font-size:13px;font-weight:800;color:#0891b2">${cultScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 10</span></span>
+      </div>
+      ${scorebar(cultScore,10,'#0891b2')}
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+        ${cultDetail.length===0
+          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 내 공원·도서관 없음</div>'
+          :cultRows+moreBtn(cultKey,cultDetail.length)}
+      </div>
+    </div>
+
+    <!-- 생활편의인프라 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🏥 생활편의인프라</span>
+        <span style="font-size:13px;font-weight:800;color:#d97706">${civicScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 20</span></span>
+      </div>
+      ${scorebar(civicScore,15,'#f59e0b')}
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        ${civicDetail.length===0
+          ?'<div style="font-size:12px;color:#aaa;padding:4px 0">반경 내 시설 없음</div>'
+          :civicRows+moreBtn(civKey,civicDetail.length)}
+      </div>
+    </div>
+
+    <!-- 거래 활성도 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">📊 거래 활성도</span>
+        <span style="font-size:13px;font-weight:800;color:#be185d">${complexScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 5</span></span>
+      </div>
+      ${scorebar(complexScore,5,'#ec4899')}
+      <div style="margin-top:8px;font-size:12px;color:${complexScore===0?'#aaa':'#555'}">
+        ${complexLabel}${complexScore>0?` <span style="color:#be185d;font-weight:700">+${complexScore}점</span>`:''}
+      </div>
+    </div>
+
+    <!-- 건축연도 -->
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700">🏗 건축연도</span>
+        <span style="font-size:13px;font-weight:800;color:#0f766e">${yearScore}<span style="font-size:11px;color:#aaa;font-weight:400"> / 5</span></span>
+      </div>
+      ${scorebar(yearScore,5,'#14b8a6')}
+      <div style="margin-top:8px;font-size:12px;color:${yearScore===0?'#aaa':'#555'}">
+        ${yearLabel}${yearScore>0?` <span style="color:#0f766e;font-weight:700">+${yearScore}점</span>`:''}
       </div>
     </div>
 
     <div style="font-size:11px;color:#bbb;margin-top:8px;line-height:1.6">
-      * 지하철: 400m이내 3점·600m 2점·800m 1점 + 환승노선당 +1점 (최대 10점)<br>
-      * 학교: 400m이내 교당 2점·600m 1점 (최대 5점)
+      * 지하철: 노선등급(2·3·5·7·9호선·신분당선·GTX=10점 / 4호선·수인분당·경의중앙·경춘·신림=6점 / 1호선급행·6호선등=4점 / 경전철=2점) + 환승노선당+2점 + 거리가점(400m=+4/500m=+2) (최대 25점)<br>
+      * 학교: 초중고 기본 1점 + 특수학교 보너스(영재/과학고/외고/국제고/자사고+3, 예술고+1) + 250m이내+2/400m이내+1, 대학교 600m=+2/1km=+1 (최대 15점)<br>
+      * 대형상업·광역교통: 백화점·복합쇼핑몰 600m=+10/1km=+6, KTX/SRT역·고속버스터미널 600m=+6/1km=+4, 대형마트 600m=+4/1km=+2 (최대 20점)<br>
+      * 공원·문화시설: 경기장 600m=+2/1km=+1, 랜드마크공원 800m=+5/1.5km=+3, 대형공원 600m=+4/1km=+2, 근린·체육공원 400m=+3/600m=+1, 소공원 300m=+1, 도서관 600m=+1 (최대 10점)<br>
+      * 생활편의인프라: 대학병원·응급실 600m=+8/1km=+6/3km=+4, 소방서·119 1km=+4/3km=+2, 경찰·파출소 600m=+4/1km=+3/3km=+2, 구청·시청 1km=+2, 주민센터 600m=+2, 어린이집 400m=+1, 은행 600m=+1(브랜드별), 다이소·스타벅스·올리브영 400m=+2/600m=+1 (최대 20점)<br>
+      * 거래 활성도: 연간 거래빈도 기반 — 거래 활발=5점, 보통=3점, 낮음=1점, 희소=0점 (최대 5점)<br>
+      * 건축연도: 신축(2021년+)=5점, 준신축(2011~2020)=3점, 구축(1997~2010)=1점, 노후(~1996)=0점 (최대 5점)
     </div>
   </div>`;
 }
