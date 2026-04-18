@@ -101,6 +101,13 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
   background:transparent; color:#0891b2;
 }
 .lbtn.active { opacity:1; background:#0891b2; color:#fff; }
+.ybtn {
+  min-width:34px; height:24px; border-radius:5px; border:2px solid #7c3aed;
+  font-size:10px; font-weight:800; cursor:pointer;
+  transition:all .15s; opacity:.35; padding:0 4px;
+  background:transparent; color:#7c3aed;
+}
+.ybtn.active { opacity:1; background:#7c3aed; color:#fff; }
 #filter-reset {
   font-size:11px; padding:3px 9px; border-radius:5px;
   background:#f0f0f0; border:1px solid #ddd; cursor:pointer;
@@ -122,15 +129,33 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
 #map { width:100%; height:100%; }
 
 #loading {
-  position:absolute; inset:0; background:rgba(255,255,255,.88);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:500; gap:12px;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9000;
+}
+#loading-card {
+  background:#fff; border-radius:16px;
+  box-shadow:0 24px 64px rgba(0,0,0,.35);
+  padding:32px 44px 28px;
+  display:flex; flex-direction:column; align-items:center;
+  gap:14px; min-width:270px; max-width:340px;
 }
 .spinner {
-  width:40px; height:40px; border:4px solid #e0e0e0; border-top-color:#f59e0b;
+  width:44px; height:44px; border:4px solid #e0e0e0; border-top-color:#f59e0b;
   border-radius:50%; animation:spin .8s linear infinite;
 }
 @keyframes spin { to { transform:rotate(360deg); } }
-#loading-msg { font-size:14px; color:#444; text-align:center; white-space:pre-line; max-width:360px; }
+#loading-msg { font-size:14px; font-weight:600; color:#222; text-align:center; white-space:pre-line; line-height:1.5; }
+#loading-progress-wrap {
+  width:100%; height:7px; background:#f0f0f0; border-radius:4px;
+  overflow:hidden; display:none;
+}
+#loading-progress-fill {
+  height:100%; width:0%; background:linear-gradient(90deg,#f59e0b,#f97316);
+  border-radius:4px; transition:width .18s ease;
+}
+#loading-pct { font-size:12px; color:#f59e0b; font-weight:700; min-height:16px; }
 
 /* ── 패널 ── */
 #panel {
@@ -512,6 +537,14 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
     <button class="lbtn" data-v="30" onclick="toggleLocFilter(30)">30↑</button>
   </div>
   <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">준공</span>
+    <button class="ybtn" data-yt="3" onclick="toggleYearFilter(3)">21↑</button>
+    <button class="ybtn" data-yt="2" onclick="toggleYearFilter(2)">11~20</button>
+    <button class="ybtn" data-yt="1" onclick="toggleYearFilter(1)">97~10</button>
+    <button class="ybtn" data-yt="0" onclick="toggleYearFilter(0)">~96</button>
+  </div>
+  <div class="filter-sep"></div>
   <button id="filter-reset" onclick="resetFilters()">전체</button>
   <div id="area-badge">
     <span id="area-badge-text"></span>
@@ -525,8 +558,12 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
   <div id="map-wrap">
     <div id="map"></div>
     <div id="loading">
-      <div class="spinner"></div>
-      <span id="loading-msg">데이터 로딩 중...</span>
+      <div id="loading-card">
+        <div class="spinner"></div>
+        <span id="loading-msg">데이터 로딩 중...</span>
+        <div id="loading-progress-wrap"><div id="loading-progress-fill"></div></div>
+        <span id="loading-pct"></span>
+      </div>
     </div>
 
     <div id="grade-legend">
@@ -679,6 +716,7 @@ let _selectedMarker = null;   // 현재 강조 표시된 마커
 let activeGr10 = new Set();
 let activeGr5  = new Set();
 let areaFilter = null;  // {type:'d'|'g'|'s', value, label}
+let activeYearTiers = new Set(); // 0=~96, 1=97~10, 2=11~20, 3=21↑
 
 // 지역 인덱스
 let areaIndex = [];
@@ -730,7 +768,7 @@ const _CACHE_BUST = Date.now();
 async function loadJSON(p){ const r=await fetch(p+'?v='+_CACHE_BUST); if(!r.ok) throw new Error(p+' 없음'); return r.json(); }
 
 async function loadAll(){
-  setLoading('데이터 로딩 중...');
+  setLoading('단지 데이터 로딩 중...', 5);
   try {
     [aptData_, chartData, cpiData, fxData, oppData] = await Promise.all([
       loadJSON('apt_data.json'),
@@ -739,7 +777,9 @@ async function loadAll(){
       loadJSON('fx_monthly.json').catch(()=>({})),
       loadJSON('opportunity_cost.json').catch(()=>({})),
     ]);
+    setLoading('통계·입지 데이터 로딩 중...', 45);
     statsData = await loadJSON('stats_summary.json').catch(()=>({}));
+    setLoading('입지 POI 데이터 로딩 중...', 55);
     [subwayData, schoolData, specialPoiData, parkData, civicData, workerScoreData, lifestyleData] = await Promise.all([
       loadJSON('subway_stations.json').catch(()=>[]),
       loadJSON('schools.json').catch(()=>[]),
@@ -749,6 +789,7 @@ async function loadAll(){
       loadJSON('worker_scores.json').catch(()=>({})),
       loadJSON('lifestyle_poi.json').catch(()=>[]),
     ]);
+    setLoading('데이터 처리 중...', 88);
     subwayData = mergeSubwayStations(subwayData); // 물리 동일역 병합
     cpiData = interpolateCPI(cpiData);
     build5yRankList();
@@ -775,6 +816,15 @@ function buildAreaIndex(){
   ].sort((a,b)=>b.count-a.count);
 }
 
+// ═══ 건축년도 티어 헬퍼 ═══
+function getYearTier(by){
+  if(!by||by===0) return 0;
+  if(by>=2021) return 3;
+  if(by>=2011) return 2;
+  if(by>=1997) return 1;
+  return 0;
+}
+
 // ═══ 필터 로직 ═══
 function isVisible(apt){
   if(!apt.la||!apt.lo) return false;
@@ -785,6 +835,9 @@ function isVisible(apt){
     else if(type==='g') ok=(apt.g||'').includes(value);
     else ok=(apt.s||'').includes(value);
     if(!ok) return false;
+  }
+  if(activeYearTiers.size>0){
+    if(!activeYearTiers.has(getYearTier(apt.by))) return false;
   }
   if(activeLocScore>0){
     const sc=_locScoreCache[apt.k];
@@ -803,23 +856,30 @@ function toggleFilter(p,g){
   s.has(g)?s.delete(g):s.add(g);
   applyFilters();
 }
+function toggleYearFilter(t){
+  if(activeYearTiers.has(t)) activeYearTiers.delete(t);
+  else activeYearTiers.add(t);
+  applyFilters();
+}
 function toggleLocFilter(v){
   if(activeLocScore===v){ activeLocScore=0; applyFilters(); updateFilterUI(); return; }
   activeLocScore=v;
   _computeAllScoresThenFilter();
 }
 async function _computeAllScoresThenFilter(){
-  const cntEl=document.getElementById('filter-count');
-  if(cntEl) cntEl.textContent='입지점수 계산 중...';
+  const total=aptData_.length;
   const BATCH=50;
-  for(let i=0;i<aptData_.length;i+=BATCH){
+  setLoading('입지점수 계산 중...', 0);
+  for(let i=0;i<total;i+=BATCH){
     aptData_.slice(i,i+BATCH).forEach(a=>{if(_locScoreCache[a.k]==null) computeAptLocScore(a);});
     await new Promise(r=>setTimeout(r,0));
+    setLoading('입지점수 계산 중...', (i+BATCH)/total*100);
   }
+  hideLoading();
   applyFilters();
   updateFilterUI();
 }
-function resetFilters(){ activeGr10.clear(); activeGr5.clear(); activeLocScore=0; clearAreaFilter(); }
+function resetFilters(){ activeGr10.clear(); activeGr5.clear(); activeLocScore=0; activeYearTiers.clear(); clearAreaFilter(); }
 function clearAreaFilter(){
   areaFilter=null;
   document.getElementById('area-input').value='';
@@ -842,7 +902,10 @@ function updateFilterUI(){
   document.querySelectorAll('.lbtn').forEach(b=>{
     b.classList.toggle('active',parseInt(b.dataset.v)===activeLocScore);
   });
-  const hasAny=activeGr10.size||activeGr5.size||areaFilter||activeLocScore;
+  document.querySelectorAll('.ybtn').forEach(b=>{
+    b.classList.toggle('active',activeYearTiers.has(parseInt(b.dataset.yt)));
+  });
+  const hasAny=activeGr10.size||activeGr5.size||areaFilter||activeLocScore||activeYearTiers.size;
   document.getElementById('filter-reset').classList.toggle('has-filter',!!hasAny);
   const badge=document.getElementById('area-badge');
   if(areaFilter){
@@ -1017,7 +1080,7 @@ function makeIcon(grade, period, noData, selected=false){
 
 // ═══ 마커 렌더링 ═══
 function renderMarkers(){
-  setLoading('마커 생성 중...');
+  setLoading('마커 생성 중...', 0);
   clusterGroup.clearLayers(); allMarkers=[];
   const all=aptData_.filter(a=>a.la&&a.lo);
   const CHUNK=500; let idx=0;
@@ -1038,7 +1101,7 @@ function renderMarkers(){
     });
     idx+=CHUNK;
     if(idx<all.length){
-      setLoading(`마커 생성 중... ${idx}/${all.length}`);
+      setLoading(`마커 생성 중... (${idx.toLocaleString()}/${all.length.toLocaleString()})`, idx/all.length*100);
       setTimeout(nextChunk,0);
     } else {
       clusterGroup.addLayers(allMarkers);
@@ -1844,7 +1907,21 @@ function updateFooter(){
 
 // ═══ 유틸 ═══
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function setLoading(m){ document.getElementById('loading').style.display='flex'; document.getElementById('loading-msg').textContent=m; }
+function setLoading(m, pct=null){
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('loading-msg').textContent=m;
+  const pw=document.getElementById('loading-progress-wrap');
+  const pf=document.getElementById('loading-progress-fill');
+  const pt=document.getElementById('loading-pct');
+  if(pct!==null){
+    pw.style.display='block';
+    pf.style.width=Math.min(100,Math.round(pct))+'%';
+    pt.textContent=Math.min(100,Math.round(pct))+'%';
+  } else {
+    pw.style.display='none';
+    pt.textContent='';
+  }
+}
 function hideLoading(){ document.getElementById('loading').style.display='none'; }
 
 // ═══ 부트스트랩 ═══
@@ -1852,7 +1929,7 @@ window.addEventListener('load',async()=>{
   initMap();
   const ok=await loadAll();
   if(!ok) return;
-  setLoading(`마커 ${aptData_.length.toLocaleString()}개 렌더링 중...`);
+  setLoading(`마커 ${aptData_.length.toLocaleString()}개 렌더링 중...`, 0);
   setTimeout(renderMarkers,50);
 });
 </script>
