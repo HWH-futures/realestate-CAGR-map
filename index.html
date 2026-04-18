@@ -446,7 +446,7 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
           <li><strong>수집 기간</strong>: 2016년 1월 ~ 2026년 3월 / 서울 25구, 경기 31시군, 인천 8구</li>
           <li><strong>CPI(소비자물가지수)</strong>: 통계청 — 실질 수익률 계산에 사용</li>
           <li><strong>지도 좌표</strong>: VWorld 지오코더 API — 국토교통부 공간정보 오픈플랫폼 (공공누리 제1유형)</li>
-          <li><strong>지도 타일</strong>: OpenStreetMap</li>
+          <li><strong>지도 타일</strong>: VWorld 배경지도 — 국토교통부 공간정보 오픈플랫폼 (공공누리 제1유형)</li>
         </ul>
       </div>
 
@@ -1027,8 +1027,8 @@ function _showPanelFromArea(aptKey){
 // ═══ 지도 초기화 ═══
 function initMap(){
   map=L.map('map',{center:[37.5665,126.9780],zoom:11});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19,
+  L.tileLayer('https://api.vworld.kr/req/wmts/1.0.0/F5CB4AD6-C437-3372-B8C6-54993E236692/Base/{z}/{y}/{x}.png',{
+    attribution:'© <a href="https://www.vworld.kr">국토교통부 VWorld</a>',maxZoom:19,maxNativeZoom:18,
   }).addTo(map);
 
   clusterGroup=L.markerClusterGroup({
@@ -1891,18 +1891,20 @@ function toggleGradeLegend(){
 // ═══ 하단 통계 ═══
 function updateFooter(){
   const total=aptData_.filter(a=>a.gr5).length;
+  const locCount=aptData_.filter(a=>a.loc!=null).length;
   const sAvg=statsData?.seoul?.avg_r10;
   const ls=statsData?.loc_score;
   document.getElementById('footer').innerHTML=`
     <span>총 <span class="hl">${aptData_.length.toLocaleString()}</span>개 단지</span>
     <span>CAGR 완료 <span class="hl">${total.toLocaleString()}</span>개</span>
+    <span>입지분석 완료 <span class="hl">${locCount.toLocaleString()}</span>개</span>
     ${sAvg!=null?`<span>서울 평균 실질(10년) <span class="hl">${sAvg>=0?'+':''}${sAvg}%/년</span></span>`:''}
     ${ls?`<span style="color:#aaa">│</span>
     <span title="수도권 전체 평균 입지점수">📍 평균 <span class="hl">${ls.avg}</span>점</span>
     <span title="상위 30% 컷오프 (${(ls.n*0.3).toLocaleString(undefined,{maximumFractionDigits:0})}개 단지)">상위30% <span class="hl">≥${ls.top30}</span></span>
     <span title="상위 10% 컷오프">상위10% <span class="hl">≥${ls.top10}</span></span>
     <span title="상위 1% 컷오프 — 최상급 입지">상위1% <span class="hl">≥${ls.top1}</span></span>`:''}
-    <span style="margin-left:auto;color:#666">기준: 2016-03~2026-03 / 인플레 제거 / OSM</span>`;
+    <span style="margin-left:auto;color:#666">기준: 2016-03~2026-03 / 인플레 제거 / VWorld</span>`;
 }
 
 // ═══ 유틸 ═══
