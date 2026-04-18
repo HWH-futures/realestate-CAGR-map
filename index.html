@@ -379,6 +379,37 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
       </div>
 
       <div class="modal-section">
+        <h3>📍 입지점수 <span style="font-weight:400;color:#888">(100점 만점)</span></h3>
+        <p style="font-size:12px;color:#777;margin-bottom:10px">수익률 등급과 별개로, <strong>교통·교육·상업·생활 인프라</strong>를 종합한 입지 환경 점수입니다.<br>단지 클릭 → <strong>📍 입지 탭</strong>에서 항목별 세부 점수를 확인할 수 있습니다.</p>
+        <table class="modal-grade-table">
+          <tr><th>항목</th><th style="text-align:center">만점</th><th>주요 기준</th></tr>
+          <tr><td>🚇 지하철</td><td style="text-align:center;font-weight:700">25</td><td>역 거리 · 노선 등급 · 환승 보너스</td></tr>
+          <tr><td>🏫 학교</td><td style="text-align:center;font-weight:700">15</td><td>초중고 · 특수학교(자사고·과학고 등) · 대학교</td></tr>
+          <tr><td>🏬 대형상업·광역교통</td><td style="text-align:center;font-weight:700">20</td><td>백화점 · 복합쇼핑몰 · KTX/SRT · 터미널 · 마트</td></tr>
+          <tr><td>🌳 공원·문화시설</td><td style="text-align:center;font-weight:700">10</td><td>랜드마크공원 · 대형공원 · 근린공원 · 도서관</td></tr>
+          <tr><td>🏥 생활편의인프라</td><td style="text-align:center;font-weight:700">20</td><td>대학병원 · 소방서 · 경찰서 · 구청 · 다이소 등</td></tr>
+          <tr><td>🔄 거래 활성도</td><td style="text-align:center;font-weight:700">5</td><td>연간 거래 빈도 기준</td></tr>
+          <tr><td>🏗 건축연도</td><td style="text-align:center;font-weight:700">5</td><td>신축(2021+)=5점 / 준신축=3점 / 구축=1점</td></tr>
+        </table>
+        <div class="modal-note" style="margin-top:8px">
+          💡 상단 필터의 <strong>입지 30↑ ~ 80↑</strong> 버튼으로 점수 이상 단지만 지도에 표시하거나,
+          검색창에서 구·동을 검색하면 <strong>해당 지역 입지점수 순위</strong>를 패널에서 바로 확인할 수 있습니다.
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h3>🔄 업데이트 내역 <span style="font-weight:400;color:#888">(2026.04)</span></h3>
+        <ul class="modal-info-list">
+          <li>📍 <strong>입지점수 시스템</strong> 신규 추가 — 100점 만점 종합 입지 평가</li>
+          <li>🔍 <strong>지역 검색 순위</strong> — 구/동 검색 시 입지점수 순위 자동 표시, 순위에서 단지 클릭 가능</li>
+          <li>🎯 <strong>입지점수 필터</strong> — 상단 필터바에 30↑~80↑ 버튼 추가</li>
+          <li>🏆 단지 상세에서 <strong>동내 / 구내 입지 등수</strong> 표시</li>
+          <li>🏥 대학병원 데이터 확충 (용인세브란스·인하대병원·고려대안암병원 등 추가)</li>
+          <li>👮 경찰·파출소 점수 확대 (600m=4점 / 1km=3점 / 3km=2점)</li>
+        </ul>
+      </div>
+
+      <div class="modal-section">
         <h3>📂 데이터 출처</h3>
         <ul class="modal-info-list">
           <li><strong>실거래가</strong>: 국토부 실거래가 공개시스템 (아파트 매매 실거래가 API)</li>
@@ -535,13 +566,13 @@ function closeInfoModal() {
   if (document.getElementById('modal-noshow').checked) {
     const exp = new Date(); exp.setHours(23,59,59,0);
     localStorage.setItem('apt_modal_exp', exp.getTime());
-    localStorage.setItem('apt_modal_ver', '20260418a');
+    localStorage.setItem('apt_modal_ver', '20260418b');
   }
   ov.style.transition = 'opacity .2s'; ov.style.opacity = '0';
   setTimeout(() => ov.style.display = 'none', 200);
 }
 (function(){
-  const MODAL_VER = '20260418a'; // 업데이트 시 이 값만 바꾸면 모달 다시 뜸
+  const MODAL_VER = '20260418b'; // 업데이트 시 이 값만 바꾸면 모달 다시 뜸
   const savedVer = localStorage.getItem('apt_modal_ver');
   const exp = localStorage.getItem('apt_modal_exp');
   if (savedVer === MODAL_VER && exp && Date.now() < +exp)
