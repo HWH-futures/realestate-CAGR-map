@@ -197,6 +197,11 @@ body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background:#f
 
 .apt-marker { cursor:pointer; }
 .apt-marker svg { display:block; }
+@keyframes aptPulse {
+  0%,100% { filter:drop-shadow(0 0 2px rgba(220,38,38,.5)); }
+  50%      { filter:drop-shadow(0 0 9px rgba(220,38,38,1)); }
+}
+.apt-sel { animation:aptPulse 1.2s ease-in-out infinite; }
 .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div {
   background-color:rgba(26,26,46,.85); color:#fff; font-weight:700; font-size:13px;
 }
@@ -668,6 +673,7 @@ let sorted5yList = [];
 let map, clusterGroup;
 let activeApt = null;
 let chartInstance = null;
+let _selectedMarker = null;   // 현재 강조 표시된 마커
 
 // 필터 상태
 let activeGr10 = new Set();
@@ -984,14 +990,15 @@ function initMap(){
 }
 
 // ═══ 마커 아이콘 ═══
-function makeIcon(grade, period, noData){
+function makeIcon(grade, period, noData, selected=false){
   if(noData){
     const isN=noData==='N';
-    const sz=22,bd=isN?'#90CAF9':'#BDBDBD',tc=isN?'#1565C0':'#888';
-    const da=isN?' stroke-dasharray="3,2"':'';
+    const sz=22,bd=selected?'#ef4444':isN?'#90CAF9':'#BDBDBD',tc=isN?'#1565C0':'#888';
+    const da=isN&&!selected?' stroke-dasharray="3,2"':'';
+    const sw=selected?2.8:1.8;
     return L.divIcon({
-      html:`<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${sz/2-1.5}" fill="#fff" stroke="${bd}" stroke-width="1.8"${da}/><text x="${sz/2}" y="${sz/2}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="9" font-weight="800" font-family="sans-serif">${noData}</text></svg>`,
-      className:'apt-marker',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2],
+      html:`<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${sz/2-1.5}" fill="#fff" stroke="${bd}" stroke-width="${sw}"${da}/><text x="${sz/2}" y="${sz/2}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="9" font-weight="800" font-family="sans-serif">${noData}</text></svg>`,
+      className:'apt-marker'+(selected?' apt-sel':''),iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2],
     });
   }
   const color=GRADE_COLOR[grade]||'#ccc';
@@ -1000,9 +1007,11 @@ function makeIcon(grade, period, noData){
   const isS=grade==='S';
   const w=isS?32:28, h=isS?42:36;
   const pl=period||'';
+  const stroke=selected?'#ef4444':'white';
+  const strokeW=selected?(isS?3.5:3):(isS?2:1.5);
   return L.divIcon({
-    html:`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="M${w/2} 1 C${w*.25} 1 1 ${h*.19} 1 ${h*.38} C1 ${h*.625} ${w/2} ${h-1} ${w/2} ${h-1} S${w-1} ${h*.625} ${w-1} ${h*.38} C${w-1} ${h*.19} ${w*.75} 1 ${w/2} 1Z" fill="${color}" stroke="white" stroke-width="${isS?2:1.5}"/><text x="${w/2}" y="${h*.26}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="${isS?7:6}" font-weight="700" font-family="sans-serif" opacity=".85">${pl}</text><text x="${w/2}" y="${h*.56}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="${isS?13:11}" font-weight="800" font-family="sans-serif">${text}</text></svg>`,
-    className:'apt-marker',iconSize:[w,h],iconAnchor:[w/2,h],popupAnchor:[0,-h],
+    html:`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="M${w/2} 1 C${w*.25} 1 1 ${h*.19} 1 ${h*.38} C1 ${h*.625} ${w/2} ${h-1} ${w/2} ${h-1} S${w-1} ${h*.625} ${w-1} ${h*.38} C${w-1} ${h*.19} ${w*.75} 1 ${w/2} 1Z" fill="${color}" stroke="${stroke}" stroke-width="${strokeW}"/><text x="${w/2}" y="${h*.26}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="${isS?7:6}" font-weight="700" font-family="sans-serif" opacity=".85">${pl}</text><text x="${w/2}" y="${h*.56}" text-anchor="middle" dominant-baseline="middle" fill="${tc}" font-size="${isS?13:11}" font-weight="800" font-family="sans-serif">${text}</text></svg>`,
+    className:'apt-marker'+(selected?' apt-sel':''),iconSize:[w,h],iconAnchor:[w/2,h],popupAnchor:[0,-h],
   });
 }
 
@@ -1039,6 +1048,31 @@ function renderMarkers(){
   setTimeout(nextChunk,0);
 }
 
+// ─── 선택 마커 강조 ───
+function _highlightMarker(apt){
+  // 이전 선택 마커 원래 아이콘으로 복원
+  if(_selectedMarker){
+    const pa=_selectedMarker.options.aptRef;
+    if(pa){
+      const hasG=pa.gr10||pa.gr5;
+      _selectedMarker.setIcon(hasG
+        ? makeIcon(pa.gr10||pa.gr5, pa.gr10?'10Y':'5Y')
+        : makeIcon(null,null,(pa.fy&&pa.fy>='202101')?'N':'-'));
+      _selectedMarker.setZIndexOffset(0);
+    }
+    _selectedMarker=null;
+  }
+  if(!apt||!apt.la||!apt.lo) return;
+  const m=allMarkers.find(mk=>mk.options.aptRef?.k===apt.k);
+  if(!m) return;
+  const hasG=apt.gr10||apt.gr5;
+  m.setIcon(hasG
+    ? makeIcon(apt.gr10||apt.gr5, apt.gr10?'10Y':'5Y', null, true)
+    : makeIcon(null,null,(apt.fy&&apt.fy>='202101')?'N':'-', true));
+  m.setZIndexOffset(1000);
+  _selectedMarker=m;
+}
+
 // ─── 동/구 내 순위 계산 ───
 function _getRank(apt, type) {
   const peers = aptData_.filter(a => {
@@ -1056,6 +1090,7 @@ function _getRank(apt, type) {
 // ═══ 상세 패널 ═══
 function showPanel(apt, fromArea=false){
   activeApt=apt;
+  _highlightMarker(apt);
   document.getElementById('panel-placeholder').style.display='none';
   const pc=document.getElementById('panel-content');
   pc.style.display='flex';
