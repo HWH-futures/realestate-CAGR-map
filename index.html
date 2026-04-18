@@ -1794,14 +1794,16 @@ function toggleGradeLegend(){
 function updateFooter(){
   const total=aptData_.filter(a=>a.gr5).length;
   const sAvg=statsData?.seoul?.avg_r10;
-  const cA=aptData_.filter(a=>a.gr10==='A').length;
-  const cE=aptData_.filter(a=>a.gr10==='E').length;
+  const ls=statsData?.loc_score;
   document.getElementById('footer').innerHTML=`
     <span>총 <span class="hl">${aptData_.length.toLocaleString()}</span>개 단지</span>
     <span>CAGR 완료 <span class="hl">${total.toLocaleString()}</span>개</span>
     ${sAvg!=null?`<span>서울 평균 실질(10년) <span class="hl">${sAvg>=0?'+':''}${sAvg}%/년</span></span>`:''}
-    <span>A등급 <span class="hl">${cA.toLocaleString()}</span>개</span>
-    <span>E등급 <span class="hl">${cE.toLocaleString()}</span>개</span>
+    ${ls?`<span style="color:#aaa">│</span>
+    <span title="수도권 전체 평균 입지점수">📍 평균 <span class="hl">${ls.avg}</span>점</span>
+    <span title="상위 30% 컷오프 (${(ls.n*0.3).toLocaleString(undefined,{maximumFractionDigits:0})}개 단지)">상위30% <span class="hl">≥${ls.top30}</span></span>
+    <span title="상위 10% 컷오프">상위10% <span class="hl">≥${ls.top10}</span></span>
+    <span title="상위 1% 컷오프 — 최상급 입지">상위1% <span class="hl">≥${ls.top1}</span></span>`:''}
     <span style="margin-left:auto;color:#666">기준: 2016-03~2026-03 / 인플레 제거 / OSM</span>`;
 }
 
